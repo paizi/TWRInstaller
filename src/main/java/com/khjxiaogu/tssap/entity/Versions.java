@@ -7,9 +7,8 @@ import java.util.List;
  * 
  * */
 public class Versions {
-	List<Version> versions;
+	public List<Version> versions;
 	public Versions() {
-		// TODO Auto-generated constructor stub
 	}
 
 }

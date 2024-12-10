@@ -8,6 +8,7 @@ public class ModPackFile {
 	public String link;
 	public boolean server;
 	public boolean client;
+	public boolean compressed;
 	public ModPackFile() {
 		
 	}

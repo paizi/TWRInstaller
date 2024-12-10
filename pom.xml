@@ -63,8 +63,12 @@
 							<addClasspath>true</addClasspath>
 							<addExtensions>false</addExtensions>
 							<classpathPrefix>./tssap_lib/</classpathPrefix>
-							<mainClass>com.khjxiaogu.tssap.Main</mainClass>
+							<!--<mainClass>com.khjxiaogu.tssap.Main</mainClass>-->
+							
 						</manifest>
+						<manifestEntries>
+						<Premain-Class>com.khjxiaogu.tssap.Main</Premain-Class>
+						</manifestEntries>
 					</archive>
 				</configuration>
 			</plugin>
