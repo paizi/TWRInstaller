@@ -55,7 +55,7 @@ public class Main {
 			Gson gson=new GsonBuilder().setPrettyPrinting().create();
 			//load language from jar
 			String lang=Locale.getDefault().getLanguage();
-			InputStream is=Main.class.getClassLoader().getResourceAsStream("com.khjxiaogu.tssap."+lang+".json");
+			InputStream is=Main.class.getClassLoader().getResourceAsStream("com.khjxiaogu.tssap."+lang.toLowerCase()+".json");
 			if(is==null) {
 				is=Main.class.getClassLoader().getResourceAsStream("com.khjxiaogu.tssap.en_us.json");
 			}
