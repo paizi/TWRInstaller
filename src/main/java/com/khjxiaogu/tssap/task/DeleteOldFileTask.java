@@ -50,4 +50,9 @@ public class DeleteOldFileTask extends AbstractFileTask {
 		return Lang.getLang("file.delete", file);
 	}
 
+	@Override
+	public String getBackupEntry() {
+		return packfile.file;
+	}
+
 }

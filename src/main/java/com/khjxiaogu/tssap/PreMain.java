@@ -12,7 +12,7 @@ public class PreMain {
 			javaExecutable = javaExecutable + "java";
 		}
 		try {
-			Process p = (new ProcessBuilder(new String[] { javaExecutable, "-jar", "packwiz-installer-bootstrap.jar", options })).inheritIO().start();
+			Process p = (new ProcessBuilder(new String[] { javaExecutable, "-jar", "tssap-bootstrap.jar", options })).inheritIO().start();
 			int exitCode;
 			if ((exitCode = p.waitFor()) != 0)
 				throw new RuntimeException("Bootstrap application returns non-zero exit code " + exitCode + ". ");

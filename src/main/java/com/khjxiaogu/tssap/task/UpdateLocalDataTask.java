@@ -41,4 +41,9 @@ public class UpdateLocalDataTask extends AbstractFileTask {
 		return Lang.getLang("config.update", file);
 	}
 
+	@Override
+	public String getBackupEntry() {
+		return null;
+	}
+
 }

@@ -59,4 +59,9 @@ public class ModPackInstallTask extends AbstractFileTask {
 		return Lang.getLang("file.update", file);
 	}
 
+	@Override
+	public String getBackupEntry() {
+		return packfile.file;
+	}
+
 }

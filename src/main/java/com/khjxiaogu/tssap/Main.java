@@ -195,7 +195,7 @@ public class Main {
 				for(AbstractTask task:tasks.getTasks()) {
 					if(task instanceof AbstractFileTask) {
 						AbstractFileTask ftask=(AbstractFileTask) task;
-						if(ftask.getFileData()==null)continue;//nothing to backup
+						if(ftask.getFileData()==null||ftask.getBackupEntry()==null)continue;//nothing to backup
 						//check policies if backup of specific files needed
 						boolean flag=true;
 						Path path=ftask.getFile().toPath();
