@@ -6,7 +6,7 @@
   <name>Twr startup bootstrap application</name>
   <description>Run in bootstrap to update mods</description>
   <build>
-		<finalName>tssap-bootstrap</finalName>
+		<finalName>twr-installer</finalName>
 		<sourceDirectory>src/main/java</sourceDirectory>
 		<resources>
 			<resource> 

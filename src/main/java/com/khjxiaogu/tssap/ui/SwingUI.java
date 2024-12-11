@@ -29,7 +29,7 @@ import com.khjxiaogu.tssap.entity.Versions;
 import com.khjxiaogu.tssap.util.LogUtil;
 
 public class SwingUI implements UI {
-	JFrame f = new JFrame("TSSAP bootstrap");
+	JFrame f = new JFrame("The-Winter-Rescue Installer");
 	JProgressBar b;
 	Runnable closeAction;
 	public SwingUI() throws Exception {
