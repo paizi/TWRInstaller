@@ -19,7 +19,7 @@ public class LogUtil {
 			e.printStackTrace();
 		}
 		try {
-			file=new PrintStream("latest.log");
+			file=new PrintStream(latestlog);
 		} catch (FileNotFoundException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

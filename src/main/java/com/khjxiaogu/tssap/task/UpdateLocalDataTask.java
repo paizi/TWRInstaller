@@ -17,17 +17,19 @@ public class UpdateLocalDataTask extends AbstractFileTask {
 	String data;
 	public UpdateLocalDataTask(File packfile,String data) {
 		super(packfile);
+		this.data=data;
 	}
 
 	@Override
 	public void runTask() throws IOException {
 		Path curfile = file.toPath();
-		Path mainloc = new File("./").toPath();
+		/*Path mainloc = new File("./").toPath();
 		if (!curfile.startsWith(mainloc)) {// found path outside minecraft, ignore.
-			LogUtil.addLog("illegal path found, download failed.");
+			LogUtil.addLog("illegal path "+curfile.toAbsolutePath()+" found, download failed.");
 			this.setFailed();
 			return;
-		}
+		}*/
+		file.getParentFile().mkdirs();
 		super.backup();
 		if (!isFailed()) {
 			FileUtil.transfer(data, file);

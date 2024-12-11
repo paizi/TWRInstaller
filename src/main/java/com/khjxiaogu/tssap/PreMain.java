@@ -11,8 +11,10 @@ public class PreMain {
 		} else {
 			javaExecutable = javaExecutable + "java";
 		}
+		System.out.println(javaExecutable);
+		
 		try {
-			Process p = (new ProcessBuilder(new String[] { javaExecutable, "-jar", "tssap-bootstrap.jar", options })).inheritIO().start();
+			Process p = (new ProcessBuilder(new String[] { javaExecutable, "-jar", "tssap-bootstrap.jar","bootstrap" })).inheritIO().start();
 			int exitCode;
 			if ((exitCode = p.waitFor()) != 0)
 				throw new RuntimeException("Bootstrap application returns non-zero exit code " + exitCode + ". ");

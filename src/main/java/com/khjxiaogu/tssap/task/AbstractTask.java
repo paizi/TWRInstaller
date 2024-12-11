@@ -6,6 +6,15 @@ import java.util.function.Consumer;
 public abstract class AbstractTask implements Runnable {
 	private boolean completed;
 	private boolean failed;
+	private boolean optional;
+	public boolean isOptional() {
+		return optional;
+	}
+
+	public AbstractTask setOptional(boolean optional) {
+		this.optional = optional;
+		return this;
+	}
 	private Consumer<AbstractTask> whenComplete;
 	public void setWhenComplete(Consumer<AbstractTask> whenComplete) {
 		this.whenComplete = whenComplete;

@@ -5,3 +5,10 @@
 /.classpath
 /.settings
 /build
+/tssap-configs/
+/tssap-backup/
+/mods/
+/logs/
+/kubejs/
+/defaultconfigs/
+/config/

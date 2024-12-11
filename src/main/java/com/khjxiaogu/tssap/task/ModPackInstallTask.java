@@ -17,7 +17,7 @@ public class ModPackInstallTask extends AbstractFileTask {
 	ModPackFile packfile;
 
 	public ModPackInstallTask(ModPackFile packfile) {
-		super(new File(packfile.file));
+		super(new File(new File("./"),packfile.file));
 		this.packfile = packfile;
 	}
 
@@ -26,7 +26,7 @@ public class ModPackInstallTask extends AbstractFileTask {
 		Path curfile = file.toPath();
 		Path mainloc = new File("./").toPath();
 		if (!curfile.startsWith(mainloc)) {// found path outside minecraft, ignore.
-			LogUtil.addLog("illegal path found, download failed.");
+			LogUtil.addLog("illegal path "+curfile.toAbsolutePath()+" found, download failed.");
 			this.setFailed();
 			return;
 		}
@@ -37,6 +37,7 @@ public class ModPackInstallTask extends AbstractFileTask {
 				return;
 			}
 		}
+		file.getParentFile().mkdirs();
 		super.backup();
 		if (!isFailed()) {
 			try {

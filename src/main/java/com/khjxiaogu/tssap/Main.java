@@ -1,7 +1,9 @@
 package com.khjxiaogu.tssap;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -13,6 +15,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
 import java.util.zip.InflaterInputStream;
@@ -21,8 +24,11 @@ import java.util.zip.ZipOutputStream;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.google.gson.JsonSyntaxException;
 import com.khjxiaogu.tssap.entity.ChannelItem;
 import com.khjxiaogu.tssap.entity.LocalConfig;
 import com.khjxiaogu.tssap.entity.LocalData;
@@ -44,186 +50,66 @@ import com.khjxiaogu.tssap.util.LogUtil;
 import com.khjxiaogu.tssap.util.TaskList;
 
 public class Main {
+	static Gson gson=new GsonBuilder().setPrettyPrinting().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
 	static File localPath=new File("tssap-configs");
+	static File configFile=new File(localPath,"config.json");
+	static File dataFile=new File(localPath,"data.json");
 	public static void main(String[] args){
 		try {
+			LogUtil.init();
 			SimpleDateFormat logdate=new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 			LogUtil.addLog("=======================================================");
 			LogUtil.addLog("started at "+logdate.format(new Date()));
 			//prepare user interface components
 			DefaultUI.setDefaultUI(new SwingUI());
-			Gson gson=new GsonBuilder().setPrettyPrinting().create();
+			DefaultUI.getDefaultUI().setProgress("loading...", -1);
+			boolean isBootstrap=false;
+			if(args.length>0)
+				isBootstrap=args[0].equals("bootstrap");
 			//load language from jar
-			String lang=Locale.getDefault().getLanguage();
-			InputStream is=Main.class.getClassLoader().getResourceAsStream("com.khjxiaogu.tssap."+lang.toLowerCase()+".json");
+			String lang=Locale.getDefault().getLanguage()+"_"+Locale.getDefault().getCountry();
+			LogUtil.addLog("display language:"+lang);
+			InputStream is=Main.class.getClassLoader().getResourceAsStream("com/khjxiaogu/tssap/"+lang.toLowerCase()+".json");
 			if(is==null) {
-				is=Main.class.getClassLoader().getResourceAsStream("com.khjxiaogu.tssap.en_us.json");
+				is=Main.class.getClassLoader().getResourceAsStream("com/khjxiaogu/tssap/en_us.json");
 			}
 			Lang.setLang(JsonParser.parseString(FileUtil.readString(is)).getAsJsonObject());
+			DefaultUI.getDefaultUI().setTitle(Lang.getLang("title"));
+			DefaultUI.getDefaultUI().setProgress(Lang.getLang("progress.meta"), -1);
 			//load local configurations
-			LocalConfig config = null;
-			LocalData data= null;
-			if(localPath.exists()) {
-				File dataFile=new File(localPath,"data.json");
-				File configFile=new File(localPath,"config.json");
-				if(dataFile.exists()) {
-					data=gson.fromJson(FileUtil.readString(dataFile), LocalData.class);
-				}
-				if(configFile.exists()) {
-					config=gson.fromJson(FileUtil.readString(configFile), LocalConfig.class);
-				}
-			}else {
+			LocalConfig config = loadConfig();
+			LocalData data= loadData();
+			if(!localPath.exists()) {
 				localPath.mkdirs();
 			}
+			//config validity check. During bootstrap mode, this would fail sliently
 			if(config==null) {
-				//DefaultUI.getDefaultUI().message(Lang.getLang("prompt.no-config.title"), Lang.getLang("prompt.no-config.message"));
 				LogUtil.addLog("No config found, skip update.");
+				if(!isBootstrap)
+					DefaultUI.getDefaultUI().message(Lang.getLang("prompt.no-config.title"), Lang.getLang("prompt.no-config.message"));
+				
 				exit();
 			}
 			if(isEmpty(config.channels)) {
-				//DefaultUI.getDefaultUI().message(Lang.getLang("prompt.no-channel.title"), Lang.getLang("prompt.no-channel.message"));
 				LogUtil.addLog("No channel found, skip update");
-				exit();
-			}
-			//respect local channel configuration
-			ChannelItem selectedChannel=null;
-			if(!isEmpty(config.selectedChannel)) {
-				if(!isEmpty(config.channels)) {
-					for(ChannelItem chan:config.channels) {
-						if(config.selectedChannel.equals(chan.id)) {
-							selectedChannel=chan;
-							break;
-						}
-					}
-				}
-			}
-			if(isEmpty(selectedChannel)) {//use first channel if no configuration found.
-				selectedChannel=config.channels.get(0);
-			}
-			if(data!=null&&!isEmpty(config.selectedVersion)) {//check if skip needed if local config does not require any update.
-				if(Objects.equals(selectedChannel.id, data.cachedChannel)) {
-					if(!isEmpty(data.cachedModpack)&&Objects.equals(data.cachedModpack.version,config.selectedVersion!=null)) {
-						exit();
-					}
-				}
-			}
-			//load metadata
-			PackMeta meta=null;
-			try (InputStream input=new InflaterInputStream(FileUtil.fetchWithRetry(selectedChannel.url,3))){
-				meta=gson.fromJson(FileUtil.readString(input), PackMeta.class);
-			}
-			if(isEmpty(meta)) {
-				exit();
-			}
-			//load version
-			Version remoteVersion=null;
-			if(isEmpty(config.selectedVersion)) {//use latest if not version selected
-				remoteVersion=meta.latestVersion;
-			}else {
-				Versions versions=null;
-				try (InputStream input=new InflaterInputStream(FileUtil.fetchWithRetry(meta.versionsPath,3))){//load history version if user requires.
-					versions=gson.fromJson(FileUtil.readString(input), Versions.class);
-				}
-				if(isEmpty(versions)|isEmpty(versions.versions)) {
-					DefaultUI.getDefaultUI().message(Lang.getLang("prompt.illegal-versions.title"), Lang.getLang("prompt.illegal-versions.message"));
-					exit();
-				}
-				for(Version version:versions.versions) {
-					if(Objects.equals(version.versionName, config.selectedVersion)) {
-						remoteVersion=version;
-						break;
-					}
-				}
-				if(isEmpty(remoteVersion)) {
-					DefaultUI.getDefaultUI().message(Lang.getLang("prompt.no-such-version.title"), Lang.getLang("prompt.no-such-version.message"));
-					exit();
-				}
-			}
-			if(isEmpty(remoteVersion)) {
-				LogUtil.addLog("no latest version found");
-				exit();
-			}
-			if(data==null)
-				data=new LocalData();
-			if(!isEmpty(data.cachedModpack)&&Objects.equals(remoteVersion.versionName, data.cachedModpack.version)){//remote version matches cache version
-				LogUtil.addLog("remote latest matches local latest");
-				exit();
-			}
-			Modpack modpack=null;//finally we get modpack 
-			try (InputStream input=new InflaterInputStream(FileUtil.fetchWithRetry(remoteVersion.packFilePath,3))){
-				modpack=gson.fromJson(FileUtil.readString(input), Modpack.class);
-			}
-			if(isEmpty(modpack)) {
-				LogUtil.addLog("no modpack found");
-				exit();
-			}
-
-			TaskList tasks=new TaskList();
-			Set<String> addedFiles=new HashSet<>();
-			for(ModPackFile mpf:modpack.files) {//check and add new files
-				addedFiles.add(mpf.file);
-				tasks.addTask(new ModPackInstallTask(mpf));
-			}
-			if(!isEmpty(data.cachedModpack)) {//delete old file when deleted in new version
-				for(ModPackFile mpf:data.cachedModpack.files) {
-					if(!addedFiles.contains(mpf.file))
-						tasks.addTask(new DeleteOldFileTask(mpf));
-				}
-			}
-			data.cachedModpack=modpack;
-			data.cachedChannel=selectedChannel.id;
-			tasks.addTask(new UpdateLocalDataTask(new File(localPath,"data.json"), gson.toJson(data)));
-			
-			tasks.start();
-			//create backup
-			File packupFolder=new File("tssap-backup");
-			packupFolder.mkdirs();
-			SimpleDateFormat sdf=new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss");
-			Path mainloc = new File("./").toPath();
-			File backupFile=new File(packupFolder,sdf.format(new Date()));
-			try(ZipOutputStream zos=new ZipOutputStream(new FileOutputStream(backupFile))){
-				List<Path> backupExcludes=new ArrayList<>();
-				List<Path> backupIncludes=new ArrayList<>();
-				if(config.backupExcludes!=null)
-					for(String s:config.backupExcludes) {
-						backupExcludes.add(new File(s).toPath());
-					}
-				if(config.backupIncludes!=null)
-					for(String s:config.backupIncludes) {
-						backupIncludes.add(new File(s).toPath());
-					}
-				for(AbstractTask task:tasks.getTasks()) {
-					if(task instanceof AbstractFileTask) {
-						AbstractFileTask ftask=(AbstractFileTask) task;
-						if(ftask.getFileData()==null||ftask.getBackupEntry()==null)continue;//nothing to backup
-						//check policies if backup of specific files needed
-						boolean flag=true;
-						Path path=ftask.getFile().toPath();
-						for(Path s:backupExcludes) {
-							if(path.startsWith(s)) {
-								flag=false;
-								break;
-							}
-						}
-						if(!flag) {
-							for(Path s:backupIncludes) {
-								if(path.startsWith(s)) {
-									flag=true;
-									break;
-								}
-							}
-						}
-						//write backup
-						if(flag) {
-							zos.putNextEntry(new ZipEntry(ftask.getBackupEntry()));
-							zos.write(ftask.getFileData());
-						}
-						
-					}
-				}
+				if(!isBootstrap)
+					DefaultUI.getDefaultUI().message(Lang.getLang("prompt.no-channel.title"), Lang.getLang("prompt.no-channel.message"));
 				
+				exit();
 			}
-			LogUtil.addLog("Update complete, backup saved to "+backupFile.getAbsolutePath());
+			//system base loaded, run logics
+			if(!isBootstrap) {
+				String[] opertaion=DefaultUI.getDefaultUI().getUserOperation(config);
+				switch(opertaion[0]) {
+				case "repair":repairOnly(data,config);System.exit(0);break;
+				case "version":config.selectedChannel=opertaion[1];config.selectedVersion=opertaion[2];saveConfig(config);
+				case "update":
+					default:
+				}
+			}
+			
+			defaultUpdate(data,config);
+			
 			System.exit(0);
 		}catch(UpdateNotRequiredException e) {
 			LogUtil.addLog("update is not required, stopping.");
@@ -233,6 +119,239 @@ public class Main {
 			System.exit(0);
 		}
 		
+	}
+	public static void defaultUpdate(LocalData data,LocalConfig config) throws Exception {
+		//respect local channel configuration
+		ChannelItem selectedChannel=getSelectedChannel(config);
+		if(!isEmpty(data.cachedChannel)&&!isEmpty(config.selectedVersion)) {//check if skip needed if local config does not require any update.
+			if(Objects.equals(selectedChannel.id, data.cachedChannel)) {
+				if(!isEmpty(data.cachedModpack)&&Objects.equals(data.cachedModpack.version,config.selectedVersion!=null)) {
+					exit();
+				}
+			}
+		}
+		//load metadata
+		PackMeta meta=getMeta(selectedChannel);
+		
+		if(isEmpty(meta)) {
+			exit();
+		}
+		//load version
+		Version remoteVersion=null;
+		if(isEmpty(config.selectedVersion)) {//use latest if not version selected
+			remoteVersion=meta.latestVersion;
+		}else {
+			Versions versions=fetchVersions(meta);
+			if(isEmpty(versions.versions)) {
+				DefaultUI.getDefaultUI().message(Lang.getLang("prompt.illegal-versions.title"), Lang.getLang("prompt.illegal-versions.message"));
+				exit();
+			}
+			remoteVersion=pickVersion(versions,config.selectedVersion);
+			if(isEmpty(remoteVersion)) {
+				DefaultUI.getDefaultUI().message(Lang.getLang("prompt.no-such-version.title"), Lang.getLang("prompt.no-such-version.message"));
+				exit();
+			}
+		}
+		if(isEmpty(remoteVersion)) {
+			LogUtil.addLog("no latest version found");
+			exit();
+		}
+		if(!isEmpty(data.cachedModpack)&&Objects.equals(remoteVersion.versionName, data.cachedModpack.version)){//remote version matches cache version
+			LogUtil.addLog("remote latest matches local latest");
+			exit();
+		}
+		Modpack modpack=fetchModpack(remoteVersion);//finally we get modpack 
+
+		if(isEmpty(modpack)) {
+			LogUtil.addLog("no modpack found");
+			exit();
+		}
+		TaskList tasks=new TaskList();
+		//create tasks 
+		updateModpackTask(tasks,modpack,data.cachedModpack);
+		updateLibraryTask(tasks,modpack);
+		updateLocalDataTask(tasks,data,modpack,selectedChannel);
+		//begin task multi-threaded
+		tasks.start();
+		DefaultUI.getDefaultUI().setProgress(Lang.getLang("progress.backup"), -1);
+		//create backup
+		File backupFile=createBackup(tasks,config);
+		LogUtil.addLog("Install complete, backup saved to "+backupFile.getAbsolutePath());
+	}
+	public static void repairOnly(LocalData data,LocalConfig config) throws Exception {
+		TaskList tasks=new TaskList();
+		//create tasks 
+		updateModpackTask(tasks,data.cachedModpack,data.cachedModpack);
+		updateLibraryTask(tasks,data.cachedModpack);
+		//begin task multi-threaded
+		tasks.start();
+		DefaultUI.getDefaultUI().setProgress(Lang.getLang("progress.backup"), -1);
+		//create backup
+		File backupFile=createBackup(tasks,config);
+		LogUtil.addLog("Repair complete, backup saved to "+backupFile.getAbsolutePath());
+	}
+	public static Versions fetchVersions(PackMeta meta) {
+		try (InputStream input=new InflaterInputStream(FileUtil.fetchWithRetry(meta.versionsPath,3))){//load history version if user requires.
+			return gson.fromJson(FileUtil.readString(input), Versions.class);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return new Versions();
+	}
+	public static Modpack fetchModpack(Version version) throws Exception {
+		try (InputStream input=new InflaterInputStream(FileUtil.fetchWithRetry(version.packFilePath,3))){
+			return gson.fromJson(FileUtil.readString(input), Modpack.class);
+		}
+	}
+	public static Version pickVersion(Versions versions,String versionName) {
+		for(Version version:versions.versions) {
+			if(Objects.equals(version.versionName, versionName)) {
+				return version;
+			}
+		}
+		return null;
+	}
+	public static PackMeta getMeta(ChannelItem channel) throws Exception {
+		try (InputStream input=new InflaterInputStream(FileUtil.fetchWithRetry(channel.url,3))){
+			return gson.fromJson(FileUtil.readString(input), PackMeta.class);
+		}
+	}
+	
+	public static ChannelItem getSelectedChannel(LocalConfig config) {
+		if(!isEmpty(config.selectedChannel)) {
+			if(!isEmpty(config.channels)) {
+				for(ChannelItem chan:config.channels) {
+					if(config.selectedChannel.equals(chan.id)) {
+						return chan;
+					}
+				}
+			}
+		}
+		//use first channel if no configuration found.
+		return config.channels.get(0);
+		
+	}
+	public static void updateLibraryTask(TaskList tasks,Modpack modpack) throws Exception {
+		File mmcPack=new File("../mmc-pack.json");
+		if(mmcPack.exists()&&!isEmpty(modpack.libraries)) {
+			boolean changed=false;
+			JsonElement mmcPackJson=JsonParser.parseString(FileUtil.readString(mmcPack));
+			try {
+				JsonArray ja=mmcPackJson.getAsJsonObject().get("components").getAsJsonArray();
+				outer:for(Entry<String, String> lib:modpack.libraries.entrySet()) {
+					for(JsonElement e:ja) {
+						if(e.isJsonObject()) {
+							JsonElement uid=e.getAsJsonObject().get("uid");
+							JsonElement version=e.getAsJsonObject().get("version");
+							if(uid==null||version==null)continue;
+							if(lib.getKey().equals(uid.getAsString())) {
+								if(!lib.getValue().equals(version.getAsString())) {
+									e.getAsJsonObject().addProperty("version", lib.getValue());
+									changed=true;
+								}
+								continue outer;
+							}
+						}
+					}
+					JsonObject newLib=new JsonObject();
+					newLib.addProperty("uid", lib.getKey());
+					newLib.addProperty("version", lib.getValue());
+					ja.add(newLib);
+					changed=true;
+				}
+				mmcPackJson.getAsJsonObject().add("components", ja);
+				tasks.addTask(new UpdateLocalDataTask(mmcPack, gson.toJson(mmcPackJson)).setOptional(true));
+			}catch(Exception ex) {
+				LogUtil.addError("can not update mmc pack libraries",ex);
+			}
+		}
+	}
+	public static File createBackup(TaskList tasks,LocalConfig config) throws Exception {
+		File packupFolder=new File("tssap-backup");
+		packupFolder.mkdirs();
+		SimpleDateFormat sdf=new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss");
+		Path mainloc = new File("./").toPath();
+		File backupFile=new File(packupFolder,sdf.format(new Date())+".zip");
+		try(ZipOutputStream zos=new ZipOutputStream(new FileOutputStream(backupFile))){
+			List<Path> backupExcludes=new ArrayList<>();
+			List<Path> backupIncludes=new ArrayList<>();
+			if(config.backupExcludes!=null)
+				for(String s:config.backupExcludes) {
+					backupExcludes.add(new File(s).toPath());
+				}
+			if(config.backupIncludes!=null)
+				for(String s:config.backupIncludes) {
+					backupIncludes.add(new File(s).toPath());
+				}
+			for(AbstractTask task:tasks.getTasks()) {
+				if(task instanceof AbstractFileTask) {
+					AbstractFileTask ftask=(AbstractFileTask) task;
+					if(ftask.getFileData()==null||ftask.getBackupEntry()==null)continue;//nothing to backup
+					//check policies if backup of specific files needed
+					boolean flag=false;
+					Path path=ftask.getFile().toPath();
+					for(Path s:backupIncludes) {
+						if(path.startsWith(s)) {
+							flag=true;
+							break;
+						}
+					}
+					
+					if(flag) {
+						for(Path s:backupExcludes) {
+							if(path.startsWith(s)) {
+								flag=false;
+								break;
+							}
+						}
+					}
+					//write backup
+					if(flag) {
+						zos.putNextEntry(new ZipEntry(ftask.getBackupEntry()));
+						zos.write(ftask.getFileData());
+					}
+					
+				}
+			}
+			
+		}
+		return backupFile;
+	}
+	public static void updateModpackTask(TaskList tasks,Modpack modpack,Modpack cached) {
+		
+		Set<String> addedFiles=new HashSet<>();
+		for(ModPackFile mpf:modpack.files) {//check and add new files
+			addedFiles.add(mpf.file);
+			tasks.addTask(new ModPackInstallTask(mpf));
+		}
+		if(!isEmpty(cached)&&!isEmpty(cached.files)) {//delete old file when deleted in new version
+			for(ModPackFile mpf:cached.files) {
+				if(!addedFiles.contains(mpf.file))
+					tasks.addTask(new DeleteOldFileTask(mpf));
+			}
+		}
+
+	}
+	public static void updateLocalDataTask(TaskList tasks,LocalData data,Modpack modpack,ChannelItem selectedChannel) {
+		data.cachedModpack=modpack;
+		data.cachedChannel=selectedChannel.id;
+		tasks.addTask(new UpdateLocalDataTask(dataFile, gson.toJson(data)));
+	}
+	public static LocalData loadData() throws Exception {
+		if(dataFile.exists()) {
+			return gson.fromJson(FileUtil.readString(dataFile), LocalData.class);
+		}
+		return new LocalData();
+	}
+	
+	public static LocalConfig loadConfig() throws Exception {
+		if(configFile.exists()) {
+			return gson.fromJson(FileUtil.readString(configFile), LocalConfig.class);
+		}
+		return new LocalConfig();
+	}
+	public static void saveConfig(LocalConfig cfg) throws Exception {
+		FileUtil.transfer(gson.toJson(cfg), configFile);
 	}
 	public static boolean isEmpty(Object obj) {
 		if(obj==null)return true;

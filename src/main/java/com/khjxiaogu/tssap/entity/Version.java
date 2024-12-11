@@ -11,5 +11,9 @@ public class Version {
 	public String changelogPath;
 	public Version() {
 	}
+	@Override
+	public String toString() {
+		return versionName ;
+	}
 
 }

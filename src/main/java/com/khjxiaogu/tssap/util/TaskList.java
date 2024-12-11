@@ -35,24 +35,28 @@ public class TaskList {
 	}
 	public void start() throws InterruptedException {
 		addAllTask();
+		DefaultUI.getDefaultUI().setCloseAction(()->{
+			terminate();
+			System.exit(0);
+		});
 		executor.shutdown();
+		
 		while(true)
-			executor.awaitTermination(1, TimeUnit.SECONDS);
+			if(executor.awaitTermination(1, TimeUnit.SECONDS))
+				break;
+		DefaultUI.getDefaultUI().setCloseAction(null);
 	}
 	private synchronized void addAllTask() {
 		for(AbstractTask task:tasks)
 			executor.submit(task);
 	}
-	private synchronized void whenTaskComplete(AbstractTask task) {
-		if(hasFailed)return;
-		if(task.isFailed()) {
-			failed++;
+	public void terminate() {
+		if(executor.isShutdown()) {
 			hasFailed=true;
-			DefaultUI.getDefaultUI().setProgress(Lang.getLang("progress.failed_rollback"), -1);
 			executor.shutdownNow();
 			boolean needRollback=DefaultUI.getDefaultUI().confirm(Lang.getLang("prompt.failed.title"), Lang.getLang("prompt.failed.message"));
 			if(needRollback) {
-				DefaultUI.getDefaultUI().setProgress("progress.rollback", -1);
+				DefaultUI.getDefaultUI().setProgress(Lang.getLang("progress.rollback"), -1);
 				for(AbstractTask rtask:tasks) {
 					if(rtask.isCompleted()||rtask.isFailed()) try {
 						rtask.rollback();
@@ -62,7 +66,18 @@ public class TaskList {
 				}
 			}
 		}
-		if(task.isCompleted()) {
+	}
+	private synchronized void whenTaskComplete(AbstractTask task) {
+		if(hasFailed)return;
+		if(task.isFailed()&&!task.isOptional()) {
+			failed++;
+			hasFailed=true;
+			DefaultUI.getDefaultUI().setProgress(Lang.getLang("progress.failed_rollback"), -1);
+			
+			terminate();
+			System.exit(0);
+		}
+		if(task.isCompleted()||task.isOptional()) {
 			complete++;
 		}
 		DefaultUI.getDefaultUI().setProgress(null, complete*1f/total);
