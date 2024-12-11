@@ -17,7 +17,7 @@ public class PreMain {
 		System.out.println(javaExecutable);
 		File batch=new File("installer.bat");
 		if(!batch.exists()) {
-			String batched="@CHCP 65001\r\n@\""+javaExecutable.replace("\"", "\\\"")+" -jar twr-installer.jar";
+			String batched="@CHCP 65001\r\n@\""+javaExecutable.replace("\"", "\\\"")+"\" -jar twr-installer.jar";
 			try {
 				FileUtil.transfer(batched, batch);
 			} catch (Exception e) {
@@ -26,7 +26,7 @@ public class PreMain {
 		}
 		File shell=new File("installer.sh");
 		if(!shell.exists()) {
-			String batched="\""+javaExecutable.replace("\"", "\\\"")+" -jar twr-installer.jar";
+			String batched="\""+javaExecutable.replace("\"", "\\\"")+"\" -jar twr-installer.jar";
 			try {
 				FileUtil.transfer(batched, shell);
 			} catch (Exception e) {
