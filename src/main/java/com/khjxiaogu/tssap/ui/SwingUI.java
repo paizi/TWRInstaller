@@ -104,7 +104,14 @@ public class SwingUI implements UI {
 	 
 	    
 	    final JComboBox<Version> cb2 = new JComboBox<Version>();
-
+		Version latest=new Version(){
+			@Override
+			public String toString() {
+				return Lang.getLang("installer.latest");
+			}
+			
+		};
+		latest.versionName="";
 	    cb2.setVisible(true);
 	    p.add(cb2);
 	    cb.addActionListener(new ActionListener() {
@@ -116,6 +123,8 @@ public class SwingUI implements UI {
 					try {
 						PackMeta meta=Main.getMeta((ChannelItem) cb.getSelectedItem());
 						Versions vers=Main.fetchVersions(meta);
+
+						cb2.addItem(latest);
 						vers.versions.forEach(cb2::addItem);
 
 					} catch (Exception e1) {
@@ -126,9 +135,13 @@ public class SwingUI implements UI {
 	    	
 	    });
 		try {
+			cb2.addItem(latest);
 			PackMeta meta=Main.getMeta((ChannelItem) cb.getSelectedItem());
 			Versions vers=Main.fetchVersions(meta);
+			
 			vers.versions.forEach(cb2::addItem);
+			Version selected=Main.pickVersion(vers, config.selectedVersion);
+			cb2.setSelectedItem(selected==null?latest:selected);
 
 		} catch (Exception e1) {
 			LogUtil.addError("Error fetching verion", e1);

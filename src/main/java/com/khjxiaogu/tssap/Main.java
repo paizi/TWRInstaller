@@ -168,7 +168,7 @@ public class Main {
 		}
 		TaskList tasks=new TaskList();
 		//create tasks 
-		updateModpackTask(tasks,modpack,data.cachedModpack);
+		updateModpackTask(config,tasks,modpack,data.cachedModpack);
 		updateLibraryTask(tasks,modpack);
 		updateLocalDataTask(tasks,data,modpack,selectedChannel);
 		//begin task multi-threaded
@@ -181,7 +181,7 @@ public class Main {
 	public static void repairOnly(LocalData data,LocalConfig config) throws Exception {
 		TaskList tasks=new TaskList();
 		//create tasks 
-		updateModpackTask(tasks,data.cachedModpack,data.cachedModpack);
+		updateModpackTask(config,tasks,data.cachedModpack,data.cachedModpack);
 		updateLibraryTask(tasks,data.cachedModpack);
 		//begin task multi-threaded
 		tasks.start();
@@ -317,10 +317,12 @@ public class Main {
 		}
 		return backupFile;
 	}
-	public static void updateModpackTask(TaskList tasks,Modpack modpack,Modpack cached) {
+	public static void updateModpackTask(LocalConfig config,TaskList tasks,Modpack modpack,Modpack cached) {
 		
 		Set<String> addedFiles=new HashSet<>();
 		for(ModPackFile mpf:modpack.files) {//check and add new files
+			if(mpf.client&&!config.isClient)continue;
+			if(mpf.server&&config.isClient)continue;
 			addedFiles.add(mpf.file);
 			tasks.addTask(new ModPackInstallTask(mpf));
 		}

@@ -24,5 +24,6 @@
 	"installer.repair":"修复整合包",
 	"installer.update":"更新整合包",
 	"installer.set_version":"更换整合包版本",
-	"installer.confirm":"确定"
+	"installer.confirm":"确定",
+	"installer.latest":"最新版本"
 }
