@@ -37,23 +37,13 @@ public class TaskList {
 		addAllTask();
 		DefaultUI.getDefaultUI().setCloseAction(()->{
 			terminate();
-			System.exit(0);
 		});
 		executor.shutdown();
 		
 		while(true)
 			if(executor.awaitTermination(1, TimeUnit.SECONDS))
 				break;
-		DefaultUI.getDefaultUI().setCloseAction(null);
-	}
-	private synchronized void addAllTask() {
-		for(AbstractTask task:tasks)
-			executor.submit(task);
-	}
-	public void terminate() {
-		if(executor.isShutdown()) {
-			hasFailed=true;
-			executor.shutdownNow();
+		if(hasFailed) {
 			boolean needRollback=DefaultUI.getDefaultUI().confirm(Lang.getLang("prompt.failed.title"), Lang.getLang("prompt.failed.message"));
 			if(needRollback) {
 				DefaultUI.getDefaultUI().setProgress(Lang.getLang("progress.rollback"), -1);
@@ -65,6 +55,19 @@ public class TaskList {
 					}
 				}
 			}
+			System.exit(0);
+		}
+		DefaultUI.getDefaultUI().setCloseAction(null);
+	}
+	private synchronized void addAllTask() {
+		for(AbstractTask task:tasks)
+			executor.submit(task);
+	}
+	public void terminate() {
+		if(executor.isShutdown()) {
+			hasFailed=true;
+			executor.shutdownNow();
+
 		}
 	}
 	private synchronized void whenTaskComplete(AbstractTask task) {
