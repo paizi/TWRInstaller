@@ -232,6 +232,9 @@ public class Main {
 		return config.channels.get(0);
 		
 	}
+	/**
+	 * Create task to update mmc-pack if necessary, it would trigger MultiMC download library next start
+	 * */
 	public static void updateLibraryTask(TaskList tasks,Modpack modpack) throws Exception {
 		File mmcPack=new File("../mmc-pack.json");
 		if(mmcPack.exists()&&!isEmpty(modpack.libraries)) {
@@ -311,23 +314,40 @@ public class Main {
 		}
 		return backupFile;
 	}
+	/**
+	 * Compute modpack update tasks
+	 * */
 	public static void updateModpackTask(LocalConfig config,TaskList tasks,Modpack modpack,Modpack cached) {
-		
+		List<String> ignores=new ArrayList<>();
+		if(config.updateIgnores!=null)
+			ignores.addAll(config.updateIgnores);
 		Set<String> addedFiles=new HashSet<>();
-		for(ModPackFile mpf:modpack.files) {//check and add new files
+		outer:for(ModPackFile mpf:modpack.files) {//check and add new files
 			if(mpf.client&&!config.isClient)continue;
 			if(mpf.server&&config.isClient)continue;
 			addedFiles.add(mpf.file);
+			for(String s:ignores) {
+				if(mpf.file.startsWith(s))
+					continue outer;
+			}
 			tasks.addTask(new ModPackInstallTask(mpf));
 		}
 		if(!isEmpty(cached)&&!isEmpty(cached.files)) {//delete old file when deleted in new version
-			for(ModPackFile mpf:cached.files) {
-				if(!addedFiles.contains(mpf.file))
+			outer:for(ModPackFile mpf:cached.files) {
+				if(!addedFiles.contains(mpf.file)) {
+					for(String s:ignores) {
+						if(mpf.file.startsWith(s))
+							continue outer;
+					}
 					tasks.addTask(new DeleteOldFileTask(mpf));
+				}
 			}
 		}
 
 	}
+	/**
+	 * add task to update local data
+	 * */
 	public static void updateLocalDataTask(TaskList tasks,LocalData data,Modpack modpack,ChannelItem selectedChannel) {
 		data.cachedModpack=modpack;
 		data.cachedChannel=selectedChannel.id;
