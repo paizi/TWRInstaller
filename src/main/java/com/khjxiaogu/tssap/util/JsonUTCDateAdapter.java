@@ -13,7 +13,7 @@ import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 
 public class JsonUTCDateAdapter extends TypeAdapter<Date> {
-	public SimpleDateFormat sdf=new SimpleDateFormat();
+	public SimpleDateFormat sdf=new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 	public JsonUTCDateAdapter() {
 		super();
 		sdf.setTimeZone(TimeZone.getTimeZone(ZoneOffset.UTC));
