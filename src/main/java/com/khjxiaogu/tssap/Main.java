@@ -46,11 +46,12 @@ import com.khjxiaogu.tssap.ui.DefaultUI;
 import com.khjxiaogu.tssap.ui.Lang;
 import com.khjxiaogu.tssap.ui.SwingUI;
 import com.khjxiaogu.tssap.util.FileUtil;
+import com.khjxiaogu.tssap.util.JsonUTCDateAdapter;
 import com.khjxiaogu.tssap.util.LogUtil;
 import com.khjxiaogu.tssap.util.TaskList;
 
 public class Main {
-	static Gson gson=new GsonBuilder().setPrettyPrinting().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
+	static Gson gson=new GsonBuilder().setPrettyPrinting().registerTypeAdapter(Date.class, new JsonUTCDateAdapter()).create();
 	static File localPath=new File("tssap-configs");
 	static File configFile=new File(localPath,"config.json");
 	static File dataFile=new File(localPath,"data.json");
