@@ -8,6 +8,7 @@ import java.awt.event.ItemEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
+import java.util.ListIterator;
 
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -99,6 +100,10 @@ public class SwingUI implements UI {
 
 	    final JComboBox<ChannelItem> cb = new JComboBox<>();
 	    config.channels.forEach(cb::addItem);
+	    for(ChannelItem item:config.channels) {
+	    	if(item.id.equals(config.selectedChannel))
+	    		cb.setSelectedItem(item);
+	    }
 	    cb.setVisible(true);
 	    p.add(cb);
 	 
@@ -118,19 +123,23 @@ public class SwingUI implements UI {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				if(e.getID()==ItemEvent.SELECTED) {
+				//if(e.getID()==ItemEvent.SELECTED) {
 					cb2.removeAllItems();
+					cb2.addItem(latest);
 					try {
 						PackMeta meta=Main.getMeta((ChannelItem) cb.getSelectedItem());
 						Versions vers=Main.fetchVersions(meta);
+						ListIterator<Version> li = vers.versions.listIterator(vers.versions.size());
 
-						cb2.addItem(latest);
-						vers.versions.forEach(cb2::addItem);
+						while (li.hasPrevious()) {
+						   cb2.addItem(li.previous());
+						}
+
 
 					} catch (Exception e1) {
 						LogUtil.addError("Error fetching verion", e1);
 					}
-				}
+				//}
 			}
 	    	
 	    });
@@ -139,7 +148,11 @@ public class SwingUI implements UI {
 			PackMeta meta=Main.getMeta((ChannelItem) cb.getSelectedItem());
 			Versions vers=Main.fetchVersions(meta);
 			
-			vers.versions.forEach(cb2::addItem);
+			ListIterator<Version> li = vers.versions.listIterator(vers.versions.size());
+
+			while (li.hasPrevious()) {
+			   cb2.addItem(li.previous());
+			}
 			Version selected=Main.pickVersion(vers, config.selectedVersion);
 			cb2.setSelectedItem(selected==null?latest:selected);
 
@@ -166,7 +179,7 @@ public class SwingUI implements UI {
 	    });
 	    f2.setTitle(Lang.getLang("installer.set_version"));
 	    f2.add(p);
-	    f2.getContentPane().setPreferredSize(new Dimension(300, 40));
+	    f2.getContentPane().setPreferredSize(new Dimension(300, 60));
 	    f2.pack();
 	    f2.setLocationRelativeTo(null);
 	    f2.setModal(true);

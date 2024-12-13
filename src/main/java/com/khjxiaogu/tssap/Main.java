@@ -273,24 +273,16 @@ public class Main {
 		Path mainloc = new File("./").toPath();
 		File backupFile=new File(packupFolder,sdf.format(new Date())+".zip");
 		try(ZipOutputStream zos=new ZipOutputStream(new FileOutputStream(backupFile))){
-			List<Path> backupExcludes=new ArrayList<>();
-			List<Path> backupIncludes=new ArrayList<>();
-			if(config.backupExcludes!=null)
-				for(String s:config.backupExcludes) {
-					backupExcludes.add(new File(s).toPath());
-				}
-			if(config.backupIncludes!=null)
-				for(String s:config.backupIncludes) {
-					backupIncludes.add(new File(s).toPath());
-				}
 			for(AbstractTask task:tasks.getTasks()) {
 				if(task instanceof AbstractFileTask) {
 					AbstractFileTask ftask=(AbstractFileTask) task;
+					//LogUtil.addLog(ftask.getBackupEntry());
 					if(ftask.getFileData()==null||ftask.getBackupEntry()==null)continue;//nothing to backup
 					//check policies if backup of specific files needed
 					boolean flag=false;
-					Path path=ftask.getFile().toPath();
-					for(Path s:backupIncludes) {
+					String path=ftask.getBackupEntry();
+					if(config.backupIncludes!=null)
+					for(String s:config.backupIncludes) {
 						if(path.startsWith(s)) {
 							flag=true;
 							break;
@@ -298,12 +290,13 @@ public class Main {
 					}
 					
 					if(flag) {
-						for(Path s:backupExcludes) {
-							if(path.startsWith(s)) {
-								flag=false;
-								break;
+						if(config.backupExcludes!=null)
+							for(String s:config.backupExcludes) {
+								if(path.startsWith(s)) {
+									flag=false;
+									break;
+								}
 							}
-						}
 					}
 					//write backup
 					if(flag) {
