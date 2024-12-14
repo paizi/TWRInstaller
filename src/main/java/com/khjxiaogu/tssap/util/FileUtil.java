@@ -57,7 +57,7 @@ public class FileUtil {
 		return ba.toByteArray();
 	}
 	public static String readString(InputStream i) throws IOException {
-		return new String(readAll(i));
+		return new String(readAll(i),StandardCharsets.UTF_8);
 	}
 	public static String readStringOrEmpty(InputStream i){
 		try {
@@ -74,7 +74,7 @@ public class FileUtil {
 		return "";
 	}
 	public static String readString(File f) throws IOException {
-		return new String(readAll(f));
+		return new String(readAll(f),StandardCharsets.UTF_8);
 	}
 
 	public static byte[] readAll(File f) throws IOException {
