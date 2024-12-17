@@ -30,6 +30,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
 import com.khjxiaogu.tssap.entity.ChannelItem;
+import com.khjxiaogu.tssap.entity.Dist;
 import com.khjxiaogu.tssap.entity.LocalConfig;
 import com.khjxiaogu.tssap.entity.LocalData;
 import com.khjxiaogu.tssap.entity.ModPackFile;
@@ -323,8 +324,8 @@ public class Main {
 			ignores.addAll(config.updateIgnores);
 		Set<String> addedFiles=new HashSet<>();
 		outer:for(ModPackFile mpf:modpack.files) {//check and add new files
-			if(mpf.client&&!config.isClient)continue;
-			if(mpf.server&&config.isClient)continue;
+			if(mpf.dist==Dist.client&&!config.isClient)continue;
+			if(mpf.dist==Dist.server&&config.isClient)continue;
 			addedFiles.add(mpf.file);
 			for(String s:ignores) {
 				if(mpf.file.startsWith(s))

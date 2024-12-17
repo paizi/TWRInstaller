@@ -6,8 +6,7 @@ public class ModPackFile {
 	public String file;
 	public String hash;
 	public String link;
-	public boolean server;
-	public boolean client;
+	public Dist dist;
 	public boolean compressed;
 	public ModPackFile() {
 		
