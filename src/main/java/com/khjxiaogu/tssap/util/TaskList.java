@@ -21,6 +21,33 @@ public class TaskList {
 	AtomicInteger it=new AtomicInteger(0);
 	public static final int THREAD_NUM=10;
 	ExecutorService executor=Executors.newFixedThreadPool(THREAD_NUM, t->new Thread(t,"TSSAP-Download-Thread-"+it.getAndAdd(1)));
+	Thread updateProgress=new Thread() {
+
+		@Override
+		public void run(){
+			try {
+				while(true) {
+					long cplt=0;
+					long uclt=0;
+					for(AbstractTask taskx:tasks) {
+						long tn=taskx.getTaskDifficulty();
+						uclt+=tn;
+						
+						if(taskx.isCompleted()||taskx.isFailed()) {
+							cplt+=tn;
+							//System.out.println("completed "+tn);
+						}
+					}
+					System.out.println(cplt+"/"+uclt);
+					DefaultUI.getDefaultUI().setProgress(null,cplt*1f/uclt);
+					Thread.sleep(50);
+				}
+			} catch (InterruptedException e) {
+			}
+		
+		}
+		
+	};
 	int complete;
 	int total;
 	int failed;
@@ -38,11 +65,18 @@ public class TaskList {
 		DefaultUI.getDefaultUI().setCloseAction(()->{
 			terminate();
 		});
+		updateProgress.setDaemon(true);
+		updateProgress.start();
 		executor.shutdown();
 		
 		while(true)
 			if(executor.awaitTermination(1, TimeUnit.SECONDS))
 				break;
+		updateProgress.interrupt();
+		try {
+			updateProgress.join();
+		} catch (InterruptedException e) {
+		}
 		if(hasFailed) {
 			boolean needRollback=DefaultUI.getDefaultUI().confirm(Lang.getLang("prompt.failed.title"), Lang.getLang("prompt.failed.message"));
 			if(needRollback) {
@@ -66,8 +100,9 @@ public class TaskList {
 	public void terminate() {
 		if(executor.isShutdown()) {
 			hasFailed=true;
-			executor.shutdownNow();
 
+			executor.shutdownNow();
+			
 		}
 	}
 	private synchronized void whenTaskComplete(AbstractTask task) {
@@ -80,9 +115,5 @@ public class TaskList {
 			terminate();
 			System.exit(0);
 		}
-		if(task.isCompleted()||task.isOptional()) {
-			complete++;
-		}
-		DefaultUI.getDefaultUI().setProgress(null, complete*1f/total);
 	}
 }

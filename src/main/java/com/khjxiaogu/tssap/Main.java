@@ -57,15 +57,15 @@ public class Main {
 	static File configFile=new File(localPath,"config.json");
 	static File dataFile=new File(localPath,"data.json");
 	public static void main(String[] args){
+		boolean isBootstrap=false;
 		try {
 			LogUtil.init();
 			SimpleDateFormat logdate=new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 			LogUtil.addLog("=======================================================");
 			LogUtil.addLog("started at "+logdate.format(new Date()));
 			//prepare user interface components
-			DefaultUI.setDefaultUI(new SwingUI());
-			DefaultUI.getDefaultUI().setProgress("loading...", -1);
-			boolean isBootstrap=false;
+	
+			
 			if(args.length>0)
 				isBootstrap=args[0].equals("bootstrap");
 			//load language from jar
@@ -76,8 +76,10 @@ public class Main {
 				is=Main.class.getClassLoader().getResourceAsStream("com/khjxiaogu/tssap/en_us.json");
 			}
 			Lang.setLang(JsonParser.parseString(FileUtil.readString(is)).getAsJsonObject());
+			DefaultUI.setDefaultUI(new SwingUI());
+			//DefaultUI.getDefaultUI().setProgress("loading...", -1);
 			DefaultUI.getDefaultUI().setTitle(Lang.getLang("title"));
-			DefaultUI.getDefaultUI().setProgress(Lang.getLang("progress.meta"), -1);
+			
 			//load local configurations
 			LocalConfig config = loadConfig();
 			LocalData data= loadData();
@@ -111,12 +113,17 @@ public class Main {
 			}
 			
 			defaultUpdate(data,config);
-			
+			if(!isBootstrap)
+				DefaultUI.getDefaultUI().message(Lang.getLang("prompt.operation_success.title"), Lang.getLang("prompt.no-operation_success.message"));
 			System.exit(0);
 		}catch(UpdateNotRequiredException e) {
 			LogUtil.addLog("update is not required, stopping.");
+			if(!isBootstrap)
+				DefaultUI.getDefaultUI().message(Lang.getLang("prompt.no_op_needed.title"), Lang.getLang("prompt.no_op_needed.message"));
 			System.exit(0);
 		}catch(Throwable t) {//must exit program to let game running
+			if(!isBootstrap)
+				DefaultUI.getDefaultUI().message(Lang.getLang("prompt.update_failed.title"), Lang.getLang("prompt.update_failed.message"));
 			LogUtil.addError("error in updating", t);
 			System.exit(0);
 		}
@@ -132,6 +139,7 @@ public class Main {
 				}
 			}
 		}
+		DefaultUI.getDefaultUI().setProgress(Lang.getLang("progress.meta"), -1);
 		//load metadata
 		PackMeta meta=getMeta(selectedChannel);
 		
@@ -193,6 +201,7 @@ public class Main {
 		LogUtil.addLog("Repair complete, backup saved to "+backupFile.getAbsolutePath());
 	}
 	public static Versions fetchVersions(PackMeta meta) {
+		DefaultUI.getDefaultUI().setProgress(Lang.getLang("progress.meta"), -1);
 		try (InputStream input=new InflaterInputStream(FileUtil.fetchWithRetry(meta.versionsPath,3))){//load history version if user requires.
 			return gson.fromJson(FileUtil.readString(input), Versions.class);
 		} catch (Exception e) {
@@ -214,6 +223,7 @@ public class Main {
 		return null;
 	}
 	public static PackMeta getMeta(ChannelItem channel) throws Exception {
+		DefaultUI.getDefaultUI().setProgress(Lang.getLang("progress.meta"), -1);
 		try (InputStream input=new InflaterInputStream(FileUtil.fetchWithRetry(channel.url,3))){
 			return gson.fromJson(FileUtil.readString(input), PackMeta.class);
 		}

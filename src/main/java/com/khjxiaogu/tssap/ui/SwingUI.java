@@ -2,24 +2,29 @@ package com.khjxiaogu.tssap.ui;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.ItemEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.awt.event.WindowListener;
 import java.util.ListIterator;
 
 import javax.swing.JButton;
 import javax.swing.JComboBox;
+import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
-import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import javax.swing.JProgressBar;
 import javax.swing.UIManager;
 import javax.swing.border.EmptyBorder;
+import javax.swing.event.PopupMenuEvent;
+import javax.swing.event.PopupMenuListener;
+import javax.swing.plaf.basic.BasicComboBoxUI;
+import javax.swing.plaf.basic.BasicComboPopup;
+import javax.swing.plaf.basic.ComboPopup;
 
 import com.khjxiaogu.tssap.Main;
 import com.khjxiaogu.tssap.entity.ChannelItem;
@@ -37,7 +42,6 @@ public class SwingUI implements UI {
 		super();
 		init();
 	}
-
 	public void init() throws Exception {
 		UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 		JPanel p = new JPanel();
@@ -77,7 +81,7 @@ public class SwingUI implements UI {
 				}
 			}
 		});
-		f.setVisible(true);
+		//f.setVisible(true);
 	}
 	@Override
 	public String[] getUserOperation(LocalConfig config) {
@@ -117,8 +121,21 @@ public class SwingUI implements UI {
 			
 		};
 		latest.versionName="";
-	    cb2.setVisible(true);
+	    cb2.setPreferredSize(new Dimension(120,20));
+	    cb.setPreferredSize(new Dimension(60,20));
+	    cb2.addPopupMenuListener(new BoundsPopupMenuListener(true,true,-1,false));
+	    cb2.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				if(cb2.getSelectedItem()!=null)
+				cb2.setToolTipText(cb2.getSelectedItem().toString());
+			}
+	    	
+	    });
+		cb2.setVisible(true);
 	    p.add(cb2);
+	    
 	    cb.addActionListener(new ActionListener() {
 
 			@Override
@@ -134,7 +151,7 @@ public class SwingUI implements UI {
 						while (li.hasPrevious()) {
 						   cb2.addItem(li.previous());
 						}
-
+						f.setVisible(false);
 
 					} catch (Exception e1) {
 						LogUtil.addError("Error fetching verion", e1);
@@ -155,7 +172,7 @@ public class SwingUI implements UI {
 			}
 			Version selected=Main.pickVersion(vers, config.selectedVersion);
 			cb2.setSelectedItem(selected==null?latest:selected);
-
+			f.setVisible(false);
 		} catch (Exception e1) {
 			LogUtil.addError("Error fetching verion", e1);
 		}
@@ -179,7 +196,7 @@ public class SwingUI implements UI {
 	    });
 	    f2.setTitle(Lang.getLang("installer.set_version"));
 	    f2.add(p);
-	    f2.getContentPane().setPreferredSize(new Dimension(300, 60));
+	    f2.getContentPane().setPreferredSize(new Dimension(340, 60));
 	    f2.pack();
 	    f2.setLocationRelativeTo(null);
 	    f2.setModal(true);
@@ -187,6 +204,7 @@ public class SwingUI implements UI {
 	    return new String[] {"version",((ChannelItem)cb.getSelectedItem()).id,((Version)cb2.getSelectedItem()).versionName};
 		
 	}
+
 	@Override
 	public boolean confirm(String title, String prompt) {
 		return JOptionPane.showConfirmDialog(f, prompt, title, JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION;
@@ -199,6 +217,8 @@ public class SwingUI implements UI {
 
 	@Override
 	public void setProgress(String content, float value) {
+		if(!f.isVisible())f.setVisible(true);
+		f.toFront();
 		b.setString(content);
 		if (value >= 0) {
 			b.setStringPainted(true);

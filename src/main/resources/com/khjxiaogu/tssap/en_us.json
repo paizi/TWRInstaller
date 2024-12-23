@@ -25,5 +25,11 @@
 	"installer.update":"Update",
 	"installer.set_version":"Select Version",
 	"installer.confirm":"Confirm",
-	"installer.latest":"Latest"
+	"installer.latest":"Latest",
+	"prompt.operation_success.title":"Succeed",
+	"prompt.operation_success.message":"All tasks completed successfully, you can run the game now!",
+	"prompt.no_op_needed.title":"Succeed",
+	"prompt.no_op_needed.message":"Configuration complete, no operation needed, you can run the game now!",
+	"prompt.update_failed.title": "Failed",
+	"prompt.update_failed.message":"Update failed, check logs/tssap_latest.log for more detail."
 }

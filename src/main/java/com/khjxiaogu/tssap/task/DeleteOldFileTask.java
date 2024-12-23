@@ -55,4 +55,9 @@ public class DeleteOldFileTask extends AbstractFileTask {
 		return packfile.file;
 	}
 
+	@Override
+	public long getTaskDifficulty() {
+		return 1000;
+	}
+
 }

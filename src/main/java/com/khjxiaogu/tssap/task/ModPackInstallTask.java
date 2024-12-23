@@ -1,9 +1,9 @@
 package com.khjxiaogu.tssap.task;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.HttpURLConnection;
 import java.nio.file.Path;
 import java.util.zip.InflaterInputStream;
 
@@ -15,10 +15,12 @@ import com.khjxiaogu.tssap.util.LogUtil;
 
 public class ModPackInstallTask extends AbstractFileTask {
 	ModPackFile packfile;
-
+	long size=1000;
 	public ModPackInstallTask(ModPackFile packfile) {
 		super(new File(new File("./"),packfile.file));
 		this.packfile = packfile;
+		if(packfile.size>0)
+			size=packfile.size;
 	}
 
 	@Override
@@ -41,7 +43,11 @@ public class ModPackInstallTask extends AbstractFileTask {
 		super.backup();
 		if (!isFailed()) {
 			try {
-				InputStream netFile = FileUtil.fetchWithRetry(packfile.link, 3);
+				HttpURLConnection netConn = FileUtil.fetchWithRetryAndSize(packfile.link, 3);
+				long ctl=netConn.getContentLengthLong();
+				if(ctl>0)
+					size=ctl;
+				InputStream netFile=netConn.getInputStream();
 				if (packfile.compressed)
 					netFile = new InflaterInputStream(netFile);
 				FileUtil.transfer(netFile, file);
@@ -63,6 +69,11 @@ public class ModPackInstallTask extends AbstractFileTask {
 	@Override
 	public String getBackupEntry() {
 		return packfile.file;
+	}
+
+	@Override
+	public long getTaskDifficulty() {
+		return size;
 	}
 
 }

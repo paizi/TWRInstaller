@@ -48,4 +48,9 @@ public class UpdateLocalDataTask extends AbstractFileTask {
 		return null;
 	}
 
+	@Override
+	public long getTaskDifficulty() {
+		return data.length();
+	}
+
 }

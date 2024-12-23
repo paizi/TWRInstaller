@@ -50,5 +50,8 @@ public abstract class AbstractTask implements Runnable {
 	}
 	public abstract void runTask() throws Exception ;
 	public abstract String getTaskDesc();
-	
+	public abstract long getTaskDifficulty();
+	public long getTaskCompleted() {
+		return 0;
+	}
 }

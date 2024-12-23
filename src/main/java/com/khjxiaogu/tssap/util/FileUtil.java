@@ -9,6 +9,7 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.function.Consumer;
 
 public class FileUtil {
 	public static void transfer(InputStream i,OutputStream os) throws IOException {
@@ -21,6 +22,18 @@ public class FileUtil {
 			// TODO Auto-generated catch block
 			throw e;
 		}
+	}
+	public static void transferWithListener(InputStream i,OutputStream os,Consumer<Long> readed) throws IOException {
+		int nRead;
+		byte[] data = new byte[16384];
+		long tread=0;
+		try {
+			while ((nRead = i.read(data, 0, data.length)) != -1) { os.write(data, 0, nRead);tread+=nRead;readed.accept(tread); }
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			throw e;
+		}
+		readed.accept(tread); 
 	}
 	public static void transfer(File i,OutputStream os) throws IOException {
 		try (FileInputStream fis=new FileInputStream(i)){
@@ -123,6 +136,28 @@ public class FileUtil {
 		do {
 			try {
 				return fetch(url);
+			}catch(IOException ex) {
+				LogUtil.addError("fetch "+url+" failed, retries "+(maxRetry-cRetry)+"/"+maxRetry, ex);
+			}
+		}while(--cRetry>0);
+		throw new IOException("fetch "+url+" failed "+maxRetry+" times, no more tries.");
+	}
+	public static HttpURLConnection fetchWithSize(String url) throws IOException {
+		HttpURLConnection huc2 = (HttpURLConnection) new URL(url).openConnection();
+		huc2.setRequestMethod("GET");
+		huc2.setDoOutput(true);
+		huc2.setDoInput(true);
+		huc2.connect();
+		long ctl=huc2.getContentLengthLong();
+		if(huc2.getResponseCode()==200)
+			return huc2;
+		throw new IOException("HTTP"+huc2.getResponseCode()+" "+huc2.getResponseMessage()+" got while fetching "+url);
+	}
+	public static HttpURLConnection fetchWithRetryAndSize(String url,int maxRetry) throws IOException {
+		int cRetry=maxRetry;
+		do {
+			try {
+				return fetchWithSize(url);
 			}catch(IOException ex) {
 				LogUtil.addError("fetch "+url+" failed, retries "+(maxRetry-cRetry)+"/"+maxRetry, ex);
 			}
