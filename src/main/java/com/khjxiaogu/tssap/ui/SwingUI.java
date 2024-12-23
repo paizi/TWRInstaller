@@ -124,6 +124,7 @@ public class SwingUI implements UI {
 	    cb2.setPreferredSize(new Dimension(120,20));
 	    cb.setPreferredSize(new Dimension(60,20));
 	    cb2.addPopupMenuListener(new BoundsPopupMenuListener(true,true,-1,false));
+	    cb.addPopupMenuListener(new BoundsPopupMenuListener(true,true,-1,false));
 	    cb2.addActionListener(new ActionListener() {
 
 			@Override
