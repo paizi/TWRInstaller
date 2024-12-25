@@ -100,8 +100,16 @@ public class TaskList {
 	public void terminate() {
 		if(executor.isShutdown()) {
 			hasFailed=true;
-
 			executor.shutdownNow();
+			updateProgress.interrupt();
+			try {
+				updateProgress.join();
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			DefaultUI.getDefaultUI().setProgress(Lang.getLang("progress.terminating"), -1);
+			
 			
 		}
 	}

@@ -6,6 +6,7 @@
 	"prompt.failed.title":"Update Failed",
 	"prompt.failed.message":"Update failed, would you like to rollback to previous version?",
 	"progress.rollback":"Rollback",
+	"progress.terminating":"Canceled, preparing rollback",
 	"prompt.no-config.title":"Error",
 	"prompt.no-config.message":"Configuration file not found!",
 	"prompt.no-channel.title":"Error",

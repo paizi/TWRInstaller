@@ -114,7 +114,7 @@ public class Main {
 			
 			defaultUpdate(data,config);
 			if(!isBootstrap)
-				DefaultUI.getDefaultUI().message(Lang.getLang("prompt.operation_success.title"), Lang.getLang("prompt.no-operation_success.message"));
+				DefaultUI.getDefaultUI().message(Lang.getLang("prompt.operation_success.title"), Lang.getLang("prompt.operation_success.message"));
 			System.exit(0);
 		}catch(UpdateNotRequiredException e) {
 			LogUtil.addLog("update is not required, stopping.");
