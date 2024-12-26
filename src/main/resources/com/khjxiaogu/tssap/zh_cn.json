@@ -6,6 +6,7 @@
 	"prompt.failed.title":"更新失败",
 	"prompt.failed.message":"更新失败，是否回滚到更新前的版本？",
 	"progress.rollback":"正在回滚更新",
+	"progress.terminating":"更新已取消，正在收集回滚数据",
 	"prompt.no-config.title":"错误",
 	"prompt.no-config.message":"未找到配置文件，无法更新！",
 	"prompt.no-channel.title":"错误",
