@@ -14,7 +14,7 @@ public interface UI {
 
 	void setCloseAction(Runnable closeAction);
 
-	String[] getUserOperation(LocalConfig config);
+	String[] getUserOperation(LocalConfig config) throws Exception;
 
 	boolean shouldExitImmediate();
 

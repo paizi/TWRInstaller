@@ -10,6 +10,7 @@ import java.awt.event.WindowEvent;
 import java.io.IOException;
 import java.util.ListIterator;
 import java.util.Objects;
+import java.util.Scanner;
 
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -62,14 +63,23 @@ public class HeadLessUI implements UI {
 	public boolean shouldExitImmediate() {
 		return true;
 	}
+	private static String readline() throws IOException {
+		String rslt="";
+		Scanner sc=new Scanner(System.in);
+		rslt=sc.nextLine();
+		
+		
+		while(System.in.available()>0)System.in.read();
+		return rslt;
+	}
 	@Override
-	public String[] getUserOperation(LocalConfig config) {
+	public String[] getUserOperation(LocalConfig config) throws Exception {
 		
 		System.out.println(Lang.getLang("installer.title")+":");
 		System.out.println(Lang.getLang("installer.hint"));
 		System.out.println(Lang.getLang("installer.repair")+"[R]");
 		System.out.println(Lang.getLang("installer.update")+"[U]");
-		//System.out.println(Lang.getLang("installer.set_version")+"[C]");
+		System.out.println(Lang.getLang("installer.set_version")+"[C]");
 		try {
 			while(true) {
 				int ch=System.in.read();
@@ -80,10 +90,10 @@ public class HeadLessUI implements UI {
 				}if(cp=='u') {
 					while(System.in.available()>0)System.in.read();
 					return new String[] {"update"};
-				}/*if(cp=='c') {
+				}if(cp=='c') {
 					while(System.in.available()>0)System.in.read();
 					break;
-				}*/
+				}
 			}
 			
 		} catch (IOException e) {
@@ -93,110 +103,51 @@ public class HeadLessUI implements UI {
 		
 		
 		JDialog f2 = new JDialog();
+		
+		
 		System.out.println(Lang.getLang("installer.header.channels"));
 	    for(ChannelItem item:config.channels) {
 	    	
 	    	System.out.println(item.name+":"+item.id);
 	    }
+	    
 	    for(ChannelItem item:config.channels) {
-	    	if(item.id.equals(config.selectedChannel))
-	    		cb.setSelectedItem(item);
+	    	if(item.id.equals(config.selectedChannel)) {
+	    		System.out.println(Lang.getLang("installer.header.current",item.id));
+	    		break;
+	    	}
 	    }
-	    cb.setVisible(true);
-	    p.add(cb);
+	    outer:while(true) {
+	    	System.out.println(Lang.getLang("installer.header.channels.prompt"));
+		    config.selectedChannel=readline().trim();
+		    if(config.selectedChannel.isEmpty())
+		    	break outer;
+		    for(ChannelItem item:config.channels) {
+		    	if(item.id.equals(config.selectedChannel))
+		    		break outer;
+		    }
+		    System.out.println(Lang.getLang("installer.header.channels.error"));
+	    }
+	    PackMeta meta=Main.getMeta(Main.getSelectedChannel(config));
+		Versions vers=Main.fetchVersions(meta);
+		System.out.println(Lang.getLang("installer.header.version.list"));
+		for(Version item:vers.versions) {
+	    	System.out.println(item.versionName);
+	    }
+		System.out.println(Lang.getLang("installer.header.current",config.selectedVersion));
+	    outer:while(true) {
+	    	System.out.println(Lang.getLang("installer.header.version.prompt"));
+		    config.selectedVersion=readline().trim();
+		    if(config.selectedVersion.isEmpty())
+		    	break outer;
+		    for(Version item:vers.versions) {
+		    	if(item.versionName.equals(config.selectedVersion))
+		    		break outer;
+		    }
+		    System.out.println(Lang.getLang("installer.header.version.error"));
+	    }
 	 
-	    
-	    final JComboBox<Version> cb2 = new JComboBox<Version>();
-		Version latest=new Version(){
-			@Override
-			public String toString() {
-				return Lang.getLang("installer.latest");
-			}
-			
-		};
-		latest.versionName="";
-	    cb2.setPreferredSize(new Dimension(120,20));
-	    cb.setPreferredSize(new Dimension(60,20));
-	    cb2.addPopupMenuListener(new BoundsPopupMenuListener(true,true,-1,false));
-	    cb.addPopupMenuListener(new BoundsPopupMenuListener(true,true,-1,false));
-	    cb2.addActionListener(new ActionListener() {
-
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				if(cb2.getSelectedItem()!=null)
-				cb2.setToolTipText(cb2.getSelectedItem().toString());
-			}
-	    	
-	    });
-		cb2.setVisible(true);
-	    p.add(cb2);
-	    
-	    cb.addActionListener(new ActionListener() {
-
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				//if(e.getID()==ItemEvent.SELECTED) {
-					cb2.removeAllItems();
-					cb2.addItem(latest);
-					try {
-						PackMeta meta=Main.getMeta((ChannelItem) cb.getSelectedItem());
-						Versions vers=Main.fetchVersions(meta);
-						ListIterator<Version> li = vers.versions.listIterator(vers.versions.size());
-
-						while (li.hasPrevious()) {
-						   cb2.addItem(li.previous());
-						}
-						f.setVisible(false);
-
-					} catch (Exception e1) {
-						LogUtil.addError("Error fetching verion", e1);
-					}
-				//}
-			}
-	    	
-	    });
-		try {
-			cb2.addItem(latest);
-			PackMeta meta=Main.getMeta((ChannelItem) cb.getSelectedItem());
-			Versions vers=Main.fetchVersions(meta);
-			
-			ListIterator<Version> li = vers.versions.listIterator(vers.versions.size());
-
-			while (li.hasPrevious()) {
-			   cb2.addItem(li.previous());
-			}
-			Version selected=Main.pickVersion(vers, config.selectedVersion);
-			cb2.setSelectedItem(selected==null?latest:selected);
-			f.setVisible(false);
-		} catch (Exception e1) {
-			LogUtil.addError("Error fetching verion", e1);
-		}
-	    JButton button=new JButton(Lang.getLang("installer.confirm"));
-	    button.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				f2.setVisible(false);
-			}
-	    	
-	    });
-	    button.setVisible(true);
-	    p.add(button);
-	    f2.addWindowListener(new WindowAdapter() {
-
-			@Override
-			public void windowClosing(WindowEvent e) {
-				System.exit(0);
-			}
-	    	
-	    });
-	    f2.setTitle(Lang.getLang("installer.set_version"));
-	    f2.add(p);
-	    f2.getContentPane().setPreferredSize(new Dimension(340, 60));
-	    f2.pack();
-	    f2.setLocationRelativeTo(null);
-	    f2.setModal(true);
-	    f2.setVisible(true);
-	    return new String[] {"version",((ChannelItem)cb.getSelectedItem()).id,((Version)cb2.getSelectedItem()).versionName};
+	    return new String[] {"version",config.selectedChannel,config.selectedVersion};
 		
 	}
 
@@ -204,8 +155,7 @@ public class HeadLessUI implements UI {
 	public boolean confirm(String title, String prompt) {
 		System.out.println(title+":");
 		System.out.println(prompt);
-		System.out.println("Input y to continue.");
-		System.out.println("Input otherwise to cancel.");
+		System.out.println(Lang.getLang("installer.header.confirm"));
 		try {
 			int b = System.in.read();
 			boolean rslt=false;
@@ -224,7 +174,7 @@ public class HeadLessUI implements UI {
 	public void message(String title, String prompt) {
 		System.out.println(title+":");
 		System.out.println(prompt);
-		System.out.println("Press Enter to continue.");
+		System.out.println(Lang.getLang("installer.header.message"));
 		try {
 			System.in.read();
 			while(System.in.available()>0)System.in.read();
@@ -245,10 +195,11 @@ public class HeadLessUI implements UI {
 		}
 		System.out.print("]");
 	}
+	String lastContent;
 	@Override
 	public void setProgress(String content, float value) {
 		if (value >= 0) {
-			int nprogress=(int) (value*5);
+			int nprogress=(int) (value*20);
 			if(nprogress!=lastProgress) {
 				lastProgress=nprogress;
 				printBar(nprogress);
@@ -256,9 +207,11 @@ public class HeadLessUI implements UI {
 			}
 		} else {
 			if (content == null)
-				System.out.print("[......]");
-			else
-				System.out.print("[......]"+content);
+				System.out.println("[......]");
+			else if(!content.equals(lastContent)) {
+				lastContent=content;
+				System.out.println("[......]"+content);
+			}
 			
 		}
 	}

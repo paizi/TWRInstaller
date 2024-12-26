@@ -32,5 +32,14 @@
 	"prompt.no_op_needed.title":"Succeed",
 	"prompt.no_op_needed.message":"Configuration complete, no operation needed, you can run the game now!",
 	"prompt.update_failed.title": "Failed",
-	"prompt.update_failed.message":"Update failed, check logs/tssap_latest.log for more detail."
+	"prompt.update_failed.message":"Update failed, check logs/tssap_latest.log for more detail.",
+	"installer.header.channels":"Name|Code",
+	"installer.header.channels.prompt":"Input [Code] of your selected channel, leave blank to selected automatically",
+	"installer.header.current":"Current: [%s]",
+	"installer.header.channels.error":"Selected channel does not exists",
+	"installer.header.version.list":"Available version: ",
+	"installer.header.version.prompt":"Input the version you like, leave blank to select latest",
+	"installer.header.version.error":"Selected version does not exists",
+	"installer.header.confirm":"Input [Y] to proceed, input [N] to cancel",
+	"installer.header.message":"Press [Enter] to continue."
 }

@@ -1,5 +1,6 @@
 package com.khjxiaogu.tssap;
 
+import java.awt.GraphicsEnvironment;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -9,6 +10,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
@@ -44,6 +46,7 @@ import com.khjxiaogu.tssap.task.DeleteOldFileTask;
 import com.khjxiaogu.tssap.task.ModPackInstallTask;
 import com.khjxiaogu.tssap.task.UpdateLocalDataTask;
 import com.khjxiaogu.tssap.ui.DefaultUI;
+import com.khjxiaogu.tssap.ui.HeadLessUI;
 import com.khjxiaogu.tssap.ui.Lang;
 import com.khjxiaogu.tssap.ui.SwingUI;
 import com.khjxiaogu.tssap.util.FileUtil;
@@ -60,24 +63,34 @@ public class Main {
 	public static void main(String[] args){
 		boolean isBootstrap=false;
 		try {
+			List<String> largs=new ArrayList<>(Arrays.asList(args));
+			isBootstrap=largs.contains("bootstrap");
 			LogUtil.init();
 			SimpleDateFormat logdate=new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-			LogUtil.addLog("=======================================================");
+			LogUtil.addLog("=================================");
 			LogUtil.addLog("started at "+logdate.format(new Date()));
-			//prepare user interface components
-	
-			
-			if(args.length>0)
-				isBootstrap=args[0].equals("bootstrap");
 			//load language from jar
 			String lang=Locale.getDefault().getLanguage()+"_"+Locale.getDefault().getCountry();
+			for(String s:largs) {
+				if(s.startsWith("lang:"))
+					lang=s.substring(5);
+			}
 			LogUtil.addLog("display language:"+lang);
+			LogUtil.addLog("=================================");
+			//prepare user interface components
+	
+
+			
+			
 			InputStream is=Main.class.getClassLoader().getResourceAsStream("com/khjxiaogu/tssap/"+lang.toLowerCase()+".json");
 			if(is==null) {
 				is=Main.class.getClassLoader().getResourceAsStream("com/khjxiaogu/tssap/en_us.json");
 			}
 			Lang.setLang(JsonParser.parseString(FileUtil.readString(is)).getAsJsonObject());
-			DefaultUI.setDefaultUI(new SwingUI());
+			if(GraphicsEnvironment.isHeadless()||largs.contains("headless"))
+				DefaultUI.setDefaultUI(new HeadLessUI());
+			else
+				DefaultUI.setDefaultUI(new SwingUI());
 			//DefaultUI.getDefaultUI().setProgress("loading...", -1);
 			DefaultUI.getDefaultUI().setTitle(Lang.getLang("title"));
 			
@@ -106,7 +119,10 @@ public class Main {
 			if(!isBootstrap) {
 				String[] opertaion=DefaultUI.getDefaultUI().getUserOperation(config);
 				switch(opertaion[0]) {
-				case "repair":repairOnly(data,config);ShutdownHandler.exitNormally();break;
+				case "repair":repairOnly(data,config);
+				if(!isBootstrap)
+					DefaultUI.getDefaultUI().message(Lang.getLang("prompt.operation_success.title"), Lang.getLang("prompt.operation_success.message"));
+				ShutdownHandler.exitNormally();break;
 				case "version":config.selectedChannel=opertaion[1];config.selectedVersion=opertaion[2];saveConfig(config);
 				case "update":
 					default:

@@ -38,7 +38,7 @@ public class TaskList {
 							//System.out.println("completed "+tn);
 						}
 					}
-					System.out.println(cplt+"/"+uclt);
+					//System.out.println(cplt+"/"+uclt);
 					DefaultUI.getDefaultUI().setProgress(null,cplt*1f/uclt);
 					Thread.sleep(50);
 				}

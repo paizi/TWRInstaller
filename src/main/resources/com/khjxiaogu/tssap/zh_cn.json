@@ -32,5 +32,15 @@
 	"prompt.no_op_needed.title":"成功",
 	"prompt.no_op_needed.message":"配置完成，无需进行更新，您可以启动游戏正常游玩了。",
 	"prompt.update_failed.title":"失败",
-	"prompt.update_failed.message":"更新没有成功，参考logs/tssap_latest.log获取更多信息。"
+	"prompt.update_failed.message":"更新没有成功，参考logs/tssap_latest.log获取更多信息。",
+	"installer.header.channels":"名称|编码",
+	"installer.header.channels.prompt":"请输入你选择更新频道的[编码]然后按[Enter]，留空按[Enter]自动选择",
+	"installer.header.current":"当前：[%s]",
+	"installer.header.channels.error":"选中的频道不存在",
+	"installer.header.version.list":"可用版本列表：",
+	"installer.header.version.prompt":"请输入你选择的版本然后按[Enter]，留空按[Enter]为自动更新",
+	"installer.header.version.error":"选中的版本不存在",
+	"installer.header.confirm":"输入[Y]后[Enter]确定，输入[N]后[Enter]取消",
+	"installer.header.message":"按[Enter]键继续"
+	
 }
