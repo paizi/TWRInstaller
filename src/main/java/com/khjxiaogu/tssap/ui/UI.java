@@ -16,4 +16,6 @@ public interface UI {
 
 	String[] getUserOperation(LocalConfig config);
 
+	boolean shouldExitImmediate();
+
 }

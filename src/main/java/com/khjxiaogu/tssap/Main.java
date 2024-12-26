@@ -49,6 +49,7 @@ import com.khjxiaogu.tssap.ui.SwingUI;
 import com.khjxiaogu.tssap.util.FileUtil;
 import com.khjxiaogu.tssap.util.JsonUTCDateAdapter;
 import com.khjxiaogu.tssap.util.LogUtil;
+import com.khjxiaogu.tssap.util.ShutdownHandler;
 import com.khjxiaogu.tssap.util.TaskList;
 
 public class Main {
@@ -105,7 +106,7 @@ public class Main {
 			if(!isBootstrap) {
 				String[] opertaion=DefaultUI.getDefaultUI().getUserOperation(config);
 				switch(opertaion[0]) {
-				case "repair":repairOnly(data,config);System.exit(0);break;
+				case "repair":repairOnly(data,config);ShutdownHandler.exitNormally();break;
 				case "version":config.selectedChannel=opertaion[1];config.selectedVersion=opertaion[2];saveConfig(config);
 				case "update":
 					default:
@@ -115,17 +116,17 @@ public class Main {
 			defaultUpdate(data,config);
 			if(!isBootstrap)
 				DefaultUI.getDefaultUI().message(Lang.getLang("prompt.operation_success.title"), Lang.getLang("prompt.no-operation_success.message"));
-			System.exit(0);
+			ShutdownHandler.exitNormally();
 		}catch(UpdateNotRequiredException e) {
 			LogUtil.addLog("update is not required, stopping.");
 			if(!isBootstrap)
 				DefaultUI.getDefaultUI().message(Lang.getLang("prompt.no_op_needed.title"), Lang.getLang("prompt.no_op_needed.message"));
-			System.exit(0);
+			ShutdownHandler.exitNormally();
 		}catch(Throwable t) {//must exit program to let game running
 			if(!isBootstrap)
 				DefaultUI.getDefaultUI().message(Lang.getLang("prompt.update_failed.title"), Lang.getLang("prompt.update_failed.message"));
 			LogUtil.addError("error in updating", t);
-			System.exit(0);
+			ShutdownHandler.exitNormally();
 		}
 		
 	}

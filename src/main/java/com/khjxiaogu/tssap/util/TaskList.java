@@ -78,7 +78,7 @@ public class TaskList {
 		} catch (InterruptedException e) {
 		}
 		if(hasFailed) {
-			boolean needRollback=DefaultUI.getDefaultUI().confirm(Lang.getLang("prompt.failed.title"), Lang.getLang("prompt.failed.message"));
+			boolean needRollback=(failed>0&&DefaultUI.getDefaultUI().shouldExitImmediate())||DefaultUI.getDefaultUI().confirm(Lang.getLang("prompt.failed.title"), Lang.getLang("prompt.failed.message"));
 			if(needRollback) {
 				DefaultUI.getDefaultUI().setProgress(Lang.getLang("progress.rollback"), -1);
 				for(AbstractTask rtask:tasks) {
@@ -89,7 +89,7 @@ public class TaskList {
 					}
 				}
 			}
-			System.exit(0);
+			ShutdownHandler.exitNormally();
 		}
 		DefaultUI.getDefaultUI().setCloseAction(null);
 	}
@@ -113,7 +113,7 @@ public class TaskList {
 			DefaultUI.getDefaultUI().setProgress(Lang.getLang("progress.failed_rollback"), -1);
 			
 			terminate();
-			System.exit(0);
+			//ShutdownHandler.exitNormally();
 		}
 	}
 }

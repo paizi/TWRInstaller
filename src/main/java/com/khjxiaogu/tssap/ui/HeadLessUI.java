@@ -3,14 +3,13 @@ package com.khjxiaogu.tssap.ui;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.Rectangle;
-import java.awt.Taskbar;
-import java.awt.Taskbar.State;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.io.IOException;
 import java.util.ListIterator;
-import java.util.function.Consumer;
+import java.util.Objects;
 
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -38,96 +37,67 @@ import com.khjxiaogu.tssap.entity.Versions;
 import com.khjxiaogu.tssap.util.LogUtil;
 import com.khjxiaogu.tssap.util.ShutdownHandler;
 
-public class SwingUI implements UI {
-	JFrame f = new JFrame("The-Winter-Rescue Installer");
-	JProgressBar b;
+public class HeadLessUI implements UI {
 	Runnable closeAction;
-	Consumer<Integer> taskBarSupport;
-	public SwingUI() throws Exception {
+	Thread shutdownHook=new Thread(()->{
+		if(!ShutdownHandler.isNormally)
+			if(closeAction!=null) {
+				closeAction.run();
+				while(!ShutdownHandler.isNormally) try {
+					Thread.sleep(10);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
+	});
+	public HeadLessUI() throws Exception {
 		super();
 		init();
 	}
 	public void init() throws Exception {
-		UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-		JPanel p = new JPanel();
-		p.setLayout(new BorderLayout(20, 20));
-		p.setBorder(new EmptyBorder(15, 15, 15, 15));
-		// create a progressbar
-		b = new JProgressBar();
-
-		// set initial value
-		b.setValue(0);
-
-		b.setAlignmentX(0.5f);
-		b.setAlignmentY(0.5f);
-		b.setIndeterminate(true);
-		b.setStringPainted(false);
-		b.setSize(200, 40);
-		
-		p.setSize(240, 80);
-		// add progressbar
-		p.add(b, BorderLayout.CENTER);
-
-		// add panel
-		f.add(p);
-		f.getContentPane().setPreferredSize(new Dimension(300, 60));
-		f.pack();
-
-		f.setMinimumSize(f.getSize());
-		f.setLocationRelativeTo(null);
-		f.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-		f.addWindowListener(new WindowAdapter() {
-			@Override
-			public void windowClosing(WindowEvent e) {
-				if(confirm(Lang.getLang("prompt.closequery.title"),Lang.getLang("prompt.closequery.message"))) {
-					if(closeAction==null)
-						ShutdownHandler.exitNormally();
-					else
-						closeAction.run();
-				}
-			}
-		});
-		try {
-		Class.forName("java.awt.Taskbar");
-		taskBarSupport=i->{
-			
-			Taskbar taskbar = Taskbar.getTaskbar();
-			if(i<0)
-				taskbar.setWindowProgressState(f, State.INDETERMINATE);
-			else {
-				taskbar.setWindowProgressState(f, State.NORMAL);
-				taskbar.setWindowProgressValue(f, i);   
-			}
-			
-		};
-		}catch(ClassNotFoundException ex) {}
+		Runtime.getRuntime().addShutdownHook(shutdownHook);
 		//f.setVisible(true);
 	}
 	@Override
 	public boolean shouldExitImmediate() {
-		return false;
+		return true;
 	}
 	@Override
 	public String[] getUserOperation(LocalConfig config) {
-	    String[] options = new String[] {Lang.getLang("installer.repair"),Lang.getLang("installer.update"),Lang.getLang("installer.set_version")};
-	    int response = JOptionPane.showOptionDialog(null, Lang.getLang("installer.hint"), Lang.getLang("installer.title"),
-	        JOptionPane.DEFAULT_OPTION, JOptionPane.PLAIN_MESSAGE,
-	        null, options, options[0]);
-		if(response==-1)
-			ShutdownHandler.exitNormally();
-		if(response==0)
-			return new String[] {"repair"};
-		if(response==1)
-			return new String[] {"update"};
+		
+		System.out.println(Lang.getLang("installer.title")+":");
+		System.out.println(Lang.getLang("installer.hint"));
+		System.out.println(Lang.getLang("installer.repair")+"[R]");
+		System.out.println(Lang.getLang("installer.update")+"[U]");
+		//System.out.println(Lang.getLang("installer.set_version")+"[C]");
+		try {
+			while(true) {
+				int ch=System.in.read();
+				int cp=Character.toLowerCase(ch);
+				if(cp=='r') {
+					while(System.in.available()>0)System.in.read();
+					return new String[] {"repair"};
+				}if(cp=='u') {
+					while(System.in.available()>0)System.in.read();
+					return new String[] {"update"};
+				}/*if(cp=='c') {
+					while(System.in.available()>0)System.in.read();
+					break;
+				}*/
+			}
+			
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
 		
 		
 		JDialog f2 = new JDialog();
-		f2.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
-		JPanel p = new JPanel();
-		p.setBorder(new EmptyBorder(10, 10, 10, 10));
-
-	    final JComboBox<ChannelItem> cb = new JComboBox<>();
-	    config.channels.forEach(cb::addItem);
+		System.out.println(Lang.getLang("installer.header.channels"));
+	    for(ChannelItem item:config.channels) {
+	    	
+	    	System.out.println(item.name+":"+item.id);
+	    }
 	    for(ChannelItem item:config.channels) {
 	    	if(item.id.equals(config.selectedChannel))
 	    		cb.setSelectedItem(item);
@@ -232,43 +202,72 @@ public class SwingUI implements UI {
 
 	@Override
 	public boolean confirm(String title, String prompt) {
-		return JOptionPane.showConfirmDialog(f, prompt, title, JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION;
+		System.out.println(title+":");
+		System.out.println(prompt);
+		System.out.println("Input y to continue.");
+		System.out.println("Input otherwise to cancel.");
+		try {
+			int b = System.in.read();
+			boolean rslt=false;
+			if(b>0) {
+				rslt=b=='y'||b=='Y';
+			}
+			while(System.in.available()>0)System.in.read();
+			return rslt;
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return false;
 	}
 
 	@Override
 	public void message(String title, String prompt) {
-		JOptionPane.showConfirmDialog(f, prompt, title, JOptionPane.DEFAULT_OPTION);
+		System.out.println(title+":");
+		System.out.println(prompt);
+		System.out.println("Press Enter to continue.");
+		try {
+			System.in.read();
+			while(System.in.available()>0)System.in.read();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
-
+	int lastProgress=-1;
+	private void printBar(int num) {
+		System.out.print("[");
+		for(int i=0;i<20;i++) {
+			if(i==num)
+				System.out.print(">");
+			else if(i<num)
+				System.out.print("=");
+			else
+				System.out.print("-");
+		}
+		System.out.print("]");
+	}
 	@Override
 	public void setProgress(String content, float value) {
-		if(!f.isVisible())f.setVisible(true);
-		f.toFront();
-		b.setString(content);
 		if (value >= 0) {
-			b.setStringPainted(true);
-			b.setIndeterminate(false);
-			b.setValue((int) (value * 100));
-			if(taskBarSupport!=null) {
-				taskBarSupport.accept((int) (value * 100));
+			int nprogress=(int) (value*5);
+			if(nprogress!=lastProgress) {
+				lastProgress=nprogress;
+				printBar(nprogress);
+				System.out.println((int) (value*100)+"%");
 			}
 		} else {
 			if (content == null)
-				b.setStringPainted(false);
+				System.out.print("[......]");
 			else
-				b.setStringPainted(true);
-			b.setIndeterminate(true);
-			if(taskBarSupport!=null) {
-				taskBarSupport.accept(-1);
-			}
+				System.out.print("[......]"+content);
+			
 		}
-		
-		
 	}
 
 	@Override
 	public void setTitle(String content) {
-		f.setTitle(content);
+		System.out.println("======================================");
+		System.out.println(content);
+		System.out.println("======================================");
 	}
 	@Override
 	public void setCloseAction(Runnable closeAction) {
