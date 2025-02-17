@@ -229,6 +229,9 @@ public class Main {
 	public static Modpack fetchModpack(Version version) throws Exception {
 		try (InputStream input=new InflaterInputStream(FileUtil.fetchWithRetry(version.packFilePath,3))){
 			return gson.fromJson(FileUtil.readString(input), Modpack.class);
+		}catch(IOException ex) {
+			reportNetworkFail();
+			throw ex;
 		}
 	}
 	public static Version pickVersion(Versions versions,String versionName) {
@@ -243,9 +246,18 @@ public class Main {
 		DefaultUI.getDefaultUI().setProgress(Lang.getLang("progress.meta"), -1);
 		try (InputStream input=new InflaterInputStream(FileUtil.fetchWithRetry(channel.url,3))){
 			return gson.fromJson(FileUtil.readString(input), PackMeta.class);
+		}catch(IOException ex) {
+			reportNetworkFail();
+			throw ex;
 		}
 	}
-	
+	private static boolean isNetworkFailReported;
+	public static void reportNetworkFail() {
+		if(!isNetworkFailReported) {
+		DefaultUI.getDefaultUI().message(Lang.getLang("prompt.no-network.title"), Lang.getLang("prompt.no-network.message"));
+			isNetworkFailReported=true;
+		}
+	}
 	public static ChannelItem getSelectedChannel(LocalConfig config) {
 		if(!isEmpty(config.selectedChannel)) {
 			if(!isEmpty(config.channels)) {
@@ -344,12 +356,17 @@ public class Main {
 	}
 	/**
 	 * Compute modpack update tasks
+	 * @throws UpdateNotRequiredException 
 	 * */
-	public static void updateModpackTask(LocalConfig config,TaskList tasks,Modpack modpack,Modpack cached) {
+	public static void updateModpackTask(LocalConfig config,TaskList tasks,Modpack modpack,Modpack cached) throws UpdateNotRequiredException {
 		List<String> ignores=new ArrayList<>();
 		if(config.updateIgnores!=null)
 			ignores.addAll(config.updateIgnores);
 		Set<String> addedFiles=new HashSet<>();
+		if(modpack==null) {
+			DefaultUI.getDefaultUI().message(Lang.getLang("prompt.not-installed.title"), Lang.getLang("prompt.not-installed.message"));
+			exit();
+		}
 		outer:for(ModPackFile mpf:modpack.files) {//check and add new files
 			if(mpf.dist==Dist.client&&!config.isClient)continue;
 			if(mpf.dist==Dist.server&&config.isClient)continue;

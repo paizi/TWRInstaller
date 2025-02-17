@@ -7,6 +7,7 @@ import java.net.HttpURLConnection;
 import java.nio.file.Path;
 import java.util.zip.InflaterInputStream;
 
+import com.khjxiaogu.tssap.Main;
 import com.khjxiaogu.tssap.entity.ModPackFile;
 import com.khjxiaogu.tssap.ui.Lang;
 import com.khjxiaogu.tssap.util.FileUtil;
@@ -54,6 +55,7 @@ public class ModPackInstallTask extends AbstractFileTask {
 				this.setCompleted();
 				return;
 			} catch (IOException e) {
+				//Main.reportNetworkFail();
 				LogUtil.addError("can not download or create file", e);
 			}
 			this.setFailed();

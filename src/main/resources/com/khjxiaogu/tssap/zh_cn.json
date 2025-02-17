@@ -31,6 +31,11 @@
 	"prompt.operation_success.message":"所有操作已成功完成，您可以启动游戏正常游玩了。",
 	"prompt.no_op_needed.title":"成功",
 	"prompt.no_op_needed.message":"配置完成，无需进行更新，您可以启动游戏正常游玩了。",
+	"prompt.no-network.title":"失败",
+	"prompt.no-network.message":"网络连接错误，请检查您的互联网链接和杀毒软件防火墙设置是否正确。",
+	"prompt.not-installed.title":"失败",
+	"prompt.not-installed.message":"整合包未安装成功，无法修复，请选择更新整合包或者运行游戏下载整合包。",
+	
 	"prompt.update_failed.title":"失败",
 	"prompt.update_failed.message":"更新没有成功，参考logs/tssap_latest.log获取更多信息。",
 	"installer.header.channels":"名称|编码",
