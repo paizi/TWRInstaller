@@ -61,6 +61,8 @@ public class Main {
 	static File configFile=new File(localPath,"config.json");
 	static File dataFile=new File(localPath,"data.json");
 	public static void main(String[] args){
+		//use proxy if necessary
+		System.setProperty("java.net.useSystemProxies", "true");
 		boolean isBootstrap=false;
 		try {
 			List<String> largs=new ArrayList<>(Arrays.asList(args));
