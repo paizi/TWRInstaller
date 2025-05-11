@@ -87,21 +87,39 @@ public class SwingUI implements UI {
 				}
 			}
 		});
-		try {
-		Class.forName("java.awt.Taskbar");
-		taskBarSupport=i->{
-			
-			Taskbar taskbar = Taskbar.getTaskbar();
-			if(i<0)
-				taskbar.setWindowProgressState(f, State.INDETERMINATE);
-			else {
-				taskbar.setWindowProgressState(f, State.NORMAL);
-				taskbar.setWindowProgressValue(f, i);   
+		
+		String osName = System.getProperty("os.name").toLowerCase();
+		boolean isMac = osName.startsWith("mac");
+		
+		if (!isMac) {
+			try {
+				Class.forName("java.awt.Taskbar");
+				Taskbar taskbar = Taskbar.getTaskbar();
+				if (taskbar.isSupported(Taskbar.Feature.PROGRESS_STATE_WINDOW)) {
+					taskBarSupport = i -> {
+						if (i < 0)
+							taskbar.setWindowProgressState(f, State.INDETERMINATE);
+						else {
+							taskbar.setWindowProgressState(f, State.NORMAL);
+							taskbar.setWindowProgressValue(f, i);
+						}
+					};
+					LogUtil.addLog("Taskbar progress feature is supported on this platform.");
+				} else {
+					LogUtil.addLog("Taskbar progress feature is not supported on this platform.");
+				}
+			} catch (Exception ex) {
+				LogUtil.addLog("Taskbar not available or not supported: " + ex.getMessage());
 			}
-			
-		};
-		}catch(ClassNotFoundException ex) {}
-		//f.setVisible(true);
+		} else {
+			LogUtil.addLog("Running on macOS, using compatible progress indicator");
+		}
+		
+		if (isMac) {
+			taskBarSupport = i -> {
+				f.setTitle(Lang.getLang("title"));
+			};
+		}
 	}
 	@Override
 	public boolean shouldExitImmediate() {
@@ -250,7 +268,12 @@ public class SwingUI implements UI {
 			b.setIndeterminate(false);
 			b.setValue((int) (value * 100));
 			if(taskBarSupport!=null) {
-				taskBarSupport.accept((int) (value * 100));
+				try {
+					taskBarSupport.accept((int) (value * 100));
+				} catch (Exception e) {
+					LogUtil.addLog("Progress update failed: " + e.getMessage());
+					taskBarSupport = null;
+				}
 			}
 		} else {
 			if (content == null)
@@ -259,11 +282,14 @@ public class SwingUI implements UI {
 				b.setStringPainted(true);
 			b.setIndeterminate(true);
 			if(taskBarSupport!=null) {
-				taskBarSupport.accept(-1);
+				try {
+					taskBarSupport.accept(-1);
+				} catch (Exception e) {
+					LogUtil.addLog("Progress update failed: " + e.getMessage());
+					taskBarSupport = null;
+				}
 			}
 		}
-		
-		
 	}
 
 	@Override
