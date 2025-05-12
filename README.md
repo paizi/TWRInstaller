@@ -3,11 +3,12 @@ A standalone general purpose modpack versioning and downloading tool
 ## End User Usage
 This is a simple guide for end users.
 ### Update on game launch
-You may add jvm argument: -javaagent=twr-installer.jar in your game launcher or server command line to make it start evert launch.
+You may add jvm argument: -javaagent=twr-installer.jar in your game launcher or server command line to make it start every launch.
 ### Repair Broken Files
 1. Run installer.bat/installer.sh it generated.
 2. Choose `Repair`.
 3. Wait for it verify all files and repair
+4. If this doesn't work, you may delete `mods`, `config`, `defaultconfig`, `kubejs` folder and run repair again
 ### Disabling automatic update
 1. Run installer.bat/installer.sh it generated.
 2. Choose `Select Version` then select a version you would like to stay in.
