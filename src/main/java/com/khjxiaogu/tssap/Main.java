@@ -78,10 +78,6 @@ import com.khjxiaogu.tssap.util.LogUtil;
 import com.khjxiaogu.tssap.util.ShutdownHandler;
 import com.khjxiaogu.tssap.util.TaskList;
 
-// TODO: Auto-generated Javadoc
-/**
- * The Class Main.
- */
 public class Main {
 	
 	/** The gson. */

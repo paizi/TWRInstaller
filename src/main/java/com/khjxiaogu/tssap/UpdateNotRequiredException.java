@@ -23,9 +23,12 @@
  */
 package com.khjxiaogu.tssap;
 
-/**
- * The Class UpdateNotRequiredException.
- */
+
 public class UpdateNotRequiredException extends Exception {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -4773487868913599958L;
 
 }

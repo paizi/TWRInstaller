@@ -25,30 +25,29 @@ package com.khjxiaogu.tssap.entity;
 
 import java.util.List;
 
-// TODO: Auto-generated Javadoc
 /**
- * The Class LocalConfig.
+ * Local Configuration entities.
  */
 public class LocalConfig {
 	
-	/** The channels. */
+	/** Update channels. */
 	public List<ChannelItem> channels;
 	
-	/** The selected channel. */
+	/** User selected channel. */
 	public String selectedChannel;
 	
-	/** The selected version. */
+	/** User selected version. */
 	public String selectedVersion;
 	
-	/** The backup includes. */
+	/** Paths included to backup. */
 	public List<String> backupIncludes;
 	
-	/** The backup excludes. */
+	/** Paths excluded from backup. */
 	public List<String> backupExcludes;
 	
-	/** The update ignores. */
+	/** Auto update ignores specific file. */
 	public List<String> updateIgnores;
 	
-	/** The is client. */
+	/** The current environment is client or server. */
 	public boolean isClient;
 }

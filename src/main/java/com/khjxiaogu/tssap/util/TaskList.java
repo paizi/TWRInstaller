@@ -36,34 +36,28 @@ import com.khjxiaogu.tssap.task.AbstractTask;
 import com.khjxiaogu.tssap.ui.DefaultUI;
 import com.khjxiaogu.tssap.ui.Lang;
 
-// TODO: Auto-generated Javadoc
 /**
- * The Class TaskList.
+ * The IO task list.
  */
 public class TaskList {
 	
 	/**
-	 * Checks if is failed.
+	 * Checks if the task list is failed.
 	 *
-	 * @return true, if is failed
+	 * @return true, if failed
 	 */
 	public boolean isFailed() {
 		return hasFailed;
 	}
 	
-	/** The tasks. */
 	LinkedList<AbstractTask> tasks=new LinkedList<>();
 	
-	/** The it. */
 	AtomicInteger it=new AtomicInteger(0);
 	
-	/** The Constant THREAD_NUM. */
 	public static final int THREAD_NUM=10;
 	
-	/** The executor. */
 	ExecutorService executor=Executors.newFixedThreadPool(THREAD_NUM, t->new Thread(t,"TSSAP-Download-Thread-"+it.getAndAdd(1)));
 	
-	/** The update progress. */
 	Thread updateProgress=new Thread() {
 
 		@Override
@@ -92,20 +86,16 @@ public class TaskList {
 		
 	};
 	
-	/** The complete. */
 	int complete;
-	
-	/** The total. */
+
 	int total;
 	
-	/** The failed. */
 	int failed;
 	
-	/** The has failed. */
 	boolean hasFailed;
 	
 	/**
-	 * Gets the tasks.
+	 * Get existing tasks.
 	 *
 	 * @return the tasks
 	 */
@@ -114,7 +104,7 @@ public class TaskList {
 	}
 	
 	/**
-	 * Adds the task.
+	 * Add task.
 	 *
 	 * @param task the task
 	 */
@@ -125,7 +115,7 @@ public class TaskList {
 	}
 	
 	/**
-	 * Start.
+	 * Start all task and no longer allow task addition
 	 *
 	 * @throws InterruptedException the interrupted exception
 	 */
@@ -163,16 +153,13 @@ public class TaskList {
 		DefaultUI.getDefaultUI().setCloseAction(null);
 	}
 	
-	/**
-	 * Adds the all task.
-	 */
 	private synchronized void addAllTask() {
 		for(AbstractTask task:tasks)
 			executor.submit(task);
 	}
 	
 	/**
-	 * Terminate.
+	 * Terminate all tasks.
 	 */
 	public void terminate() {
 		if(executor.isShutdown()) {
@@ -192,7 +179,7 @@ public class TaskList {
 	}
 	
 	/**
-	 * When task complete.
+	 * task complete handler
 	 *
 	 * @param task the task
 	 */

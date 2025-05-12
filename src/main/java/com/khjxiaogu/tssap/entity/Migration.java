@@ -23,17 +23,10 @@
  */
 package com.khjxiaogu.tssap.entity;
 
-// TODO: Auto-generated Javadoc
-/**
- * The Class Migration.
- */
 public class Migration {
 
-	/**
-	 * Instantiates a new migration.
-	 */
+
 	public Migration() {
-		// TODO Auto-generated constructor stub
 	}
 
 }
