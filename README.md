@@ -87,3 +87,5 @@ Note that libraries are library uid and version for Multimc automatic updating t
 	"compressed": <true if the file is deflated>
 }
 ```
+## Building
+just run `maven install` and all is done.
