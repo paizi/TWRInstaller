@@ -1,3 +1,26 @@
+/*
+ * MIT License
+ *
+ * Copyright (c) 2025 TeamMoeg
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
 package com.khjxiaogu.tssap;
 
 import java.awt.GraphicsEnvironment;
@@ -56,10 +79,24 @@ import com.khjxiaogu.tssap.util.ShutdownHandler;
 import com.khjxiaogu.tssap.util.TaskList;
 
 public class Main {
+	
+	/** The gson. */
 	static Gson gson=new GsonBuilder().setPrettyPrinting().registerTypeAdapter(Date.class, new JsonUTCDateAdapter()).create();
+	
+	/** The local path. */
 	static File localPath=new File("tssap-configs");
+	
+	/** The config file. */
 	static File configFile=new File(localPath,"config.json");
+	
+	/** The data file. */
 	static File dataFile=new File(localPath,"data.json");
+	
+	/**
+	 * The main method.
+	 *
+	 * @param args the arguments
+	 */
 	public static void main(String[] args){
 		//use proxy if necessary
 		System.setProperty("java.net.useSystemProxies", "true");
@@ -148,6 +185,14 @@ public class Main {
 		}
 		
 	}
+	
+	/**
+	 * Default update.
+	 *
+	 * @param data the data
+	 * @param config the config
+	 * @throws Exception the exception
+	 */
 	public static void defaultUpdate(LocalData data,LocalConfig config) throws Exception {
 		//respect local channel configuration
 		ChannelItem selectedChannel=getSelectedChannel(config);
@@ -207,6 +252,14 @@ public class Main {
 		File backupFile=createBackup(tasks,config);
 		LogUtil.addLog("Install complete, backup saved to "+backupFile.getAbsolutePath());
 	}
+	
+	/**
+	 * Repair only.
+	 *
+	 * @param data the data
+	 * @param config the config
+	 * @throws Exception the exception
+	 */
 	public static void repairOnly(LocalData data,LocalConfig config) throws Exception {
 		TaskList tasks=new TaskList();
 		//create tasks 
@@ -219,6 +272,13 @@ public class Main {
 		File backupFile=createBackup(tasks,config);
 		LogUtil.addLog("Repair complete, backup saved to "+backupFile.getAbsolutePath());
 	}
+	
+	/**
+	 * Fetch versions.
+	 *
+	 * @param meta the meta
+	 * @return the versions
+	 */
 	public static Versions fetchVersions(PackMeta meta) {
 		DefaultUI.getDefaultUI().setProgress(Lang.getLang("progress.meta"), -1);
 		try (InputStream input=new InflaterInputStream(FileUtil.fetchWithRetry(meta.versionsPath,3))){//load history version if user requires.
@@ -228,6 +288,14 @@ public class Main {
 		}
 		return new Versions();
 	}
+	
+	/**
+	 * Fetch modpack.
+	 *
+	 * @param version the version
+	 * @return the modpack
+	 * @throws Exception the exception
+	 */
 	public static Modpack fetchModpack(Version version) throws Exception {
 		try (InputStream input=new InflaterInputStream(FileUtil.fetchWithRetry(version.packFilePath,3))){
 			return gson.fromJson(FileUtil.readString(input), Modpack.class);
@@ -236,6 +304,14 @@ public class Main {
 			throw ex;
 		}
 	}
+	
+	/**
+	 * Pick version.
+	 *
+	 * @param versions the versions
+	 * @param versionName the version name
+	 * @return the version
+	 */
 	public static Version pickVersion(Versions versions,String versionName) {
 		for(Version version:versions.versions) {
 			if(Objects.equals(version.versionName, versionName)) {
@@ -244,6 +320,14 @@ public class Main {
 		}
 		return null;
 	}
+	
+	/**
+	 * Gets the meta.
+	 *
+	 * @param channel the channel
+	 * @return the meta
+	 * @throws Exception the exception
+	 */
 	public static PackMeta getMeta(ChannelItem channel) throws Exception {
 		DefaultUI.getDefaultUI().setProgress(Lang.getLang("progress.meta"), -1);
 		try (InputStream input=new InflaterInputStream(FileUtil.fetchWithRetry(channel.url,3))){
@@ -253,13 +337,26 @@ public class Main {
 			throw ex;
 		}
 	}
+	
+	/** The is network fail reported. */
 	private static boolean isNetworkFailReported;
+	
+	/**
+	 * Report network fail.
+	 */
 	public static void reportNetworkFail() {
 		if(!isNetworkFailReported) {
 		DefaultUI.getDefaultUI().message(Lang.getLang("prompt.no-network.title"), Lang.getLang("prompt.no-network.message"));
 			isNetworkFailReported=true;
 		}
 	}
+	
+	/**
+	 * Gets the selected channel.
+	 *
+	 * @param config the config
+	 * @return the selected channel
+	 */
 	public static ChannelItem getSelectedChannel(LocalConfig config) {
 		if(!isEmpty(config.selectedChannel)) {
 			if(!isEmpty(config.channels)) {
@@ -274,9 +371,14 @@ public class Main {
 		return config.channels.get(0);
 		
 	}
+	
 	/**
-	 * Create task to update mmc-pack if necessary, it would trigger MultiMC download library next start
-	 * */
+	 * Create task to update mmc-pack if necessary, it would trigger MultiMC download library next start.
+	 *
+	 * @param tasks the tasks
+	 * @param modpack the modpack
+	 * @throws Exception the exception
+	 */
 	public static void updateLibraryTask(TaskList tasks,Modpack modpack) throws Exception {
 		File mmcPack=new File("../mmc-pack.json");
 		if(mmcPack.exists()&&!isEmpty(modpack.libraries)) {
@@ -312,6 +414,15 @@ public class Main {
 			}
 		}
 	}
+	
+	/**
+	 * Creates the backup.
+	 *
+	 * @param tasks the tasks
+	 * @param config the config
+	 * @return the file
+	 * @throws Exception the exception
+	 */
 	public static File createBackup(TaskList tasks,LocalConfig config) throws Exception {
 		File packupFolder=new File("tssap-backup");
 		packupFolder.mkdirs();
@@ -356,10 +467,16 @@ public class Main {
 		}
 		return backupFile;
 	}
+	
 	/**
-	 * Compute modpack update tasks
-	 * @throws UpdateNotRequiredException 
-	 * */
+	 * Compute modpack update tasks.
+	 *
+	 * @param config the config
+	 * @param tasks the tasks
+	 * @param modpack the modpack
+	 * @param cached the cached
+	 * @throws UpdateNotRequiredException the update not required exception
+	 */
 	public static void updateModpackTask(LocalConfig config,TaskList tasks,Modpack modpack,Modpack cached) throws UpdateNotRequiredException {
 		List<String> ignores=new ArrayList<>();
 		if(config.updateIgnores!=null)
@@ -392,14 +509,27 @@ public class Main {
 		}
 
 	}
+	
 	/**
-	 * add task to update local data
-	 * */
+	 * add task to update local data.
+	 *
+	 * @param tasks the tasks
+	 * @param data the data
+	 * @param modpack the modpack
+	 * @param selectedChannel the selected channel
+	 */
 	public static void updateLocalDataTask(TaskList tasks,LocalData data,Modpack modpack,ChannelItem selectedChannel) {
 		data.cachedModpack=modpack;
 		data.cachedChannel=selectedChannel.id;
 		tasks.addTask(new UpdateLocalDataTask(dataFile, gson.toJson(data)));
 	}
+	
+	/**
+	 * Load data.
+	 *
+	 * @return the local data
+	 * @throws Exception the exception
+	 */
 	public static LocalData loadData() throws Exception {
 		if(dataFile.exists()) {
 			return gson.fromJson(FileUtil.readString(dataFile), LocalData.class);
@@ -407,15 +537,35 @@ public class Main {
 		return new LocalData();
 	}
 	
+	/**
+	 * Load config.
+	 *
+	 * @return the local config
+	 * @throws Exception the exception
+	 */
 	public static LocalConfig loadConfig() throws Exception {
 		if(configFile.exists()) {
 			return gson.fromJson(FileUtil.readString(configFile), LocalConfig.class);
 		}
 		return new LocalConfig();
 	}
+	
+	/**
+	 * Save config.
+	 *
+	 * @param cfg the cfg
+	 * @throws Exception the exception
+	 */
 	public static void saveConfig(LocalConfig cfg) throws Exception {
 		FileUtil.transfer(gson.toJson(cfg), configFile);
 	}
+	
+	/**
+	 * Checks if is empty.
+	 *
+	 * @param obj the obj
+	 * @return true, if is empty
+	 */
 	public static boolean isEmpty(Object obj) {
 		if(obj==null)return true;
 		if(obj instanceof CharSequence)return ((CharSequence)obj).length()==0;
@@ -423,6 +573,12 @@ public class Main {
 		if(obj instanceof Map)return ((Map)obj).size()==0;
 		return false;
 	}
+	
+	/**
+	 * Exit.
+	 *
+	 * @throws UpdateNotRequiredException the update not required exception
+	 */
 	public static void exit() throws UpdateNotRequiredException {
 		
 		throw new UpdateNotRequiredException();
