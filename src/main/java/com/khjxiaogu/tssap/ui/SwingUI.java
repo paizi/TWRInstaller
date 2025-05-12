@@ -17,6 +17,7 @@ import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
@@ -41,17 +42,34 @@ import com.khjxiaogu.tssap.util.ShutdownHandler;
 public class SwingUI implements UI {
 	JFrame f = new JFrame("The-Winter-Rescue Installer");
 	JProgressBar b;
+	JLabel statusLabel;
 	Runnable closeAction;
 	Consumer<Integer> taskBarSupport;
+	boolean isMacOS;
+	
 	public SwingUI() throws Exception {
 		super();
+		isMacOS = System.getProperty("os.name").toLowerCase().startsWith("mac");
 		init();
 	}
+	
 	public void init() throws Exception {
 		UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 		JPanel p = new JPanel();
 		p.setLayout(new BorderLayout(20, 20));
 		p.setBorder(new EmptyBorder(15, 15, 15, 15));
+		
+		if (isMacOS) {
+			statusLabel = new JLabel("");
+			statusLabel.setHorizontalAlignment(JLabel.CENTER);
+			statusLabel.setAlignmentX(0.5f);
+			
+			JPanel topPanel = new JPanel();
+			topPanel.setLayout(new BorderLayout());
+			topPanel.add(statusLabel, BorderLayout.CENTER);
+			p.add(topPanel, BorderLayout.NORTH);
+		}
+		
 		// create a progressbar
 		b = new JProgressBar();
 
@@ -65,6 +83,7 @@ public class SwingUI implements UI {
 		b.setSize(200, 40);
 		
 		p.setSize(240, 80);
+		
 		// add progressbar
 		p.add(b, BorderLayout.CENTER);
 
@@ -88,10 +107,7 @@ public class SwingUI implements UI {
 			}
 		});
 		
-		String osName = System.getProperty("os.name").toLowerCase();
-		boolean isMac = osName.startsWith("mac");
-		
-		if (!isMac) {
+		if (!isMacOS) {
 			try {
 				Class.forName("java.awt.Taskbar");
 				Taskbar taskbar = Taskbar.getTaskbar();
@@ -113,9 +129,6 @@ public class SwingUI implements UI {
 			}
 		} else {
 			LogUtil.addLog("Running on macOS, using compatible progress indicator");
-		}
-		
-		if (isMac) {
 			taskBarSupport = i -> {
 				f.setTitle(Lang.getLang("title"));
 			};
@@ -163,8 +176,8 @@ public class SwingUI implements UI {
 			
 		};
 		latest.versionName="";
-	    cb2.setPreferredSize(new Dimension(120,20));
-	    cb.setPreferredSize(new Dimension(60,20));
+	    cb2.setPreferredSize(new Dimension(150,20));
+	    cb.setPreferredSize(new Dimension(120,20));
 	    cb2.addPopupMenuListener(new BoundsPopupMenuListener(true,true,-1,false));
 	    cb.addPopupMenuListener(new BoundsPopupMenuListener(true,true,-1,false));
 	    cb2.addActionListener(new ActionListener() {
@@ -183,7 +196,6 @@ public class SwingUI implements UI {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				//if(e.getID()==ItemEvent.SELECTED) {
 					cb2.removeAllItems();
 					cb2.addItem(latest);
 					try {
@@ -199,7 +211,6 @@ public class SwingUI implements UI {
 					} catch (Exception e1) {
 						LogUtil.addError("Error fetching verion", e1);
 					}
-				//}
 			}
 	    	
 	    });
@@ -239,7 +250,7 @@ public class SwingUI implements UI {
 	    });
 	    f2.setTitle(Lang.getLang("installer.set_version"));
 	    f2.add(p);
-	    f2.getContentPane().setPreferredSize(new Dimension(340, 60));
+	    f2.getContentPane().setPreferredSize(new Dimension(400, 60));
 	    f2.pack();
 	    f2.setLocationRelativeTo(null);
 	    f2.setModal(true);
@@ -262,9 +273,35 @@ public class SwingUI implements UI {
 	public void setProgress(String content, float value) {
 		if(!f.isVisible())f.setVisible(true);
 		f.toFront();
-		b.setString(content);
+		
+		if (isMacOS) {
+			if (content != null && !content.isEmpty()) {
+				if (value >= 0) {
+					int percentage = (int) (value * 100);
+					statusLabel.setText(content + " " + percentage + "%");
+				} else {
+					statusLabel.setText(content);
+				}
+			} else {
+				statusLabel.setText("");
+			}
+			b.setStringPainted(false);
+		} else {
+			b.setString(content);
+			if (value >= 0) {
+				if (content == null)
+					b.setStringPainted(false);
+				else
+					b.setStringPainted(true);
+			} else {
+				if (content == null)
+					b.setStringPainted(false);
+				else
+					b.setStringPainted(true);
+			}
+		}
+		
 		if (value >= 0) {
-			b.setStringPainted(true);
 			b.setIndeterminate(false);
 			b.setValue((int) (value * 100));
 			if(taskBarSupport!=null) {
@@ -276,10 +313,6 @@ public class SwingUI implements UI {
 				}
 			}
 		} else {
-			if (content == null)
-				b.setStringPainted(false);
-			else
-				b.setStringPainted(true);
 			b.setIndeterminate(true);
 			if(taskBarSupport!=null) {
 				try {
